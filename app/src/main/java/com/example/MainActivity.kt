@@ -81,6 +81,18 @@ fun DashboardScreen() {
     
     var selectedIconUri by remember { mutableStateOf<Uri?>(null) }
     var newProjIcon by remember { mutableStateOf("folder") }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredProjects = remember(projects, searchQuery) {
+        if (searchQuery.isBlank()) {
+            projects
+        } else {
+            projects.filter {
+                it.name.contains(searchQuery, ignoreCase = true) ||
+                it.description.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     val copyUriToFile = { uri: Uri, destFile: java.io.File ->
         try {
@@ -147,7 +159,7 @@ fun DashboardScreen() {
     // Responsive Grid computation
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp
-    val columns = if (screenWidth < 600) 3 else 6
+    val columns = if (screenWidth < 600) 2 else 4
 
     Scaffold(
         topBar = {
@@ -168,7 +180,7 @@ fun DashboardScreen() {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0F0C20)
+                    containerColor = Color(0xFF0D0B18)
                 ),
                 actions = {
                     IconButton(
@@ -193,66 +205,146 @@ fun DashboardScreen() {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Proyek Baru", modifier = Modifier.size(28.dp))
             }
         },
-        containerColor = Color(0xFF0F0C20)
+        containerColor = Color(0xFF0D0B18)
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (projects.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
+            // Search Bar Area
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Cari nama atau deskripsi proyek...", color = Color(0xFF7F7A9B)) },
+                leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Kosong",
-                        tint = Color(0xFF444466),
-                        modifier = Modifier.size(80.dp)
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search icon",
+                        tint = Color(0xFF03DAC6)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Belum Ada Proyek",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Klik tombol (+) di bawah untuk membuat proyek web sandbox JavaScript pertama Anda.",
-                        fontSize = 14.sp,
-                        color = Color(0xFFBEBED0),
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-                }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(projects) { project ->
-                        ProjectItemCard(
-                            project = project,
-                            onClicked = {
-                                // Default action: run it
-                                val intent = Intent(context, PreviewActivity::class.java).apply {
-                                    putExtra("PROJECT_NAME", project.name)
-                                    putExtra("PROJECT_PATH", project.path)
-                                }
-                                context.startActivity(intent)
-                            },
-                            onLongClicked = {
-                                selectedProjectForOptions = project
-                            }
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search",
+                                tint = Color(0xFFBEBED0)
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF03DAC6),
+                    unfocusedBorderColor = Color(0xFF221E42),
+                    focusedContainerColor = Color(0xFF14112B),
+                    unfocusedContainerColor = Color(0xFF14112B),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+
+            // Dynamic HUD/Stats Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (searchQuery.isEmpty()) {
+                        "Total: ${projects.size} Proyek"
+                    } else {
+                        "Hasil pencarian: ${filteredProjects.size} dari ${projects.size}"
+                    },
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFBB86FC)
+                )
+
+                Text(
+                    text = "Tekan Ikon (⋮) untuk Menu Pilihan",
+                    fontSize = 11.sp,
+                    color = Color(0xFF64748B)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Main Content Area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                if (filteredProjects.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = if (searchQuery.isEmpty()) Icons.Default.Info else Icons.Default.Search,
+                            contentDescription = "Kosong",
+                            tint = Color(0xFF444466),
+                            modifier = Modifier.size(64.dp)
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = if (searchQuery.isEmpty()) "Belum Ada Proyek" else "Proyek Tidak Ditemukan",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (searchQuery.isEmpty()) {
+                                "Klik tombol (+) di bawah untuk membuat proyek web sandbox JavaScript pertama Anda."
+                            } else {
+                                "Tidak ada proyek yang cocok dengan kata kunci '$searchQuery'."
+                            },
+                            fontSize = 14.sp,
+                            color = Color(0xFFBEBED0),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 20.sp,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(columns),
+                        contentPadding = PaddingValues(bottom = 80.dp, start = 16.dp, end = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredProjects) { project ->
+                            ProjectItemCard(
+                                project = project,
+                                onClicked = {
+                                    val intent = Intent(context, PreviewActivity::class.java).apply {
+                                        putExtra("PROJECT_NAME", project.name)
+                                        putExtra("PROJECT_PATH", project.path)
+                                    }
+                                    context.startActivity(intent)
+                                },
+                                onLongClicked = {
+                                    selectedProjectForOptions = project
+                                },
+                                onMoreOptionsClicked = {
+                                    selectedProjectForOptions = project
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -767,7 +859,8 @@ fun DashboardScreen() {
 fun ProjectItemCard(
     project: Project,
     onClicked: () -> Unit,
-    onLongClicked: () -> Unit
+    onLongClicked: () -> Unit,
+    onMoreOptionsClicked: () -> Unit
 ) {
     val customIconFile = remember(project.path) { File(project.path, "project_icon.png") }
     val bitmap = remember(project.iconName, customIconFile) {
@@ -789,61 +882,123 @@ fun ProjectItemCard(
 
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E1B38)
+            containerColor = Color(0xFF14112A)
         ),
         shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp, 
+            Color(0xFF2B2554)
+        ),
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp)
+            .height(150.dp)
             .combinedClickable(
                 onClick = onClicked,
                 onLongClick = onLongClicked
             )
             .testTag("project_card_${project.folderName}")
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF6200EE).copy(alpha = 0.25f))
+                    .fillMaxSize()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = project.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                // Top Row: Icon Container & Action indicator
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF8B5CF6).copy(alpha = 0.15f))
+                    ) {
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = project.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = project.name,
+                                tint = Color(0xFF03DAC6),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    
+                    // Small option menu button on top-right of card for easy reachability
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.04f))
+                            .combinedClickable(
+                                onClick = onMoreOptionsClicked
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Pilihan",
+                            tint = Color(0xFFBEBED0),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Project Details block
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = project.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                } else {
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = project.description.ifEmpty { "Aplikasi sandbox JS kustom" },
+                        fontSize = 11.sp,
+                        color = Color(0xFF9E9EB2),
+                        maxLines = 2,
+                        lineHeight = 14.sp,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Call to action inline row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Icon(
-                        imageVector = iconVector,
-                        contentDescription = project.name,
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Run Icon",
                         tint = Color(0xFF03DAC6),
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = "JALANKAN SANDBOX",
+                        color = Color(0xFF03DAC6),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = project.name,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }

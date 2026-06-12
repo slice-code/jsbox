@@ -8,282 +8,574 @@
     <link rel="stylesheet" href="/libs/codemirror.min.css">
     <link rel="stylesheet" href="/libs/dracula.min.css">
     <style>
+        :root {
+            --bg-base: #06050c;
+            --bg-sidebar: #0b0a14;
+            --bg-panel: #111020;
+            --bg-input: #17152b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --border-glow: rgba(139, 92, 246, 0.2);
+            --accent-primary: #03dac6;
+            --accent-secondary: #a78bfa;
+            --color-text: #e2e8f0;
+            --color-muted: #64748b;
+            --accent-error: #ef4444;
+            --btn-hover: #1f1d3a;
+            --font-monospace: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
+
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0d0b18;
-            color: #f1f1f1;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--color-text);
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            letter-spacing: -0.011em;
         }
-        /* Top Navigation Header */
+
+        /* Scrollbar customization */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Top Header Navigation */
         header {
-            background-color: #0f0c20;
+            background: linear-gradient(90deg, var(--bg-sidebar) 0%, var(--bg-base) 100%);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 24px;
-            border-bottom: 1px solid #1f1b38;
-            height: 60px;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-color);
+            height: 64px;
+            position: relative;
+            z-index: 10;
         }
+
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
+
+        .brand-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-icon {
+            color: var(--accent-primary);
+            width: 24px;
+            height: 24px;
+        }
+
         .logo {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: #03dac6;
-            letter-spacing: 0.5px;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #ffffff;
+            letter-spacing: -0.3px;
         }
+
         .logo span {
-            color: #bb86fc;
+            color: var(--accent-primary);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
         .status-badge {
             display: flex;
             align-items: center;
-            gap: 6px;
-            background: #15122a;
-            padding: 4px 10px;
-            border-radius: 99px;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 14px;
+            border-radius: 30px;
             font-size: 0.75rem;
-            color: #a0a0c0;
-            border: 1px solid #231f47;
+            font-weight: 500;
+            color: var(--color-muted);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
         }
+
         .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: #cf6679;
+            background-color: var(--accent-error);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
+
         .status-dot.connected {
-            background-color: #03dac6;
-            box-shadow: 0 0 8px #03dac6;
+            background-color: var(--accent-primary);
+            box-shadow: 0 0 10px var(--accent-primary);
+            animation: pulse-glow 2s infinite ease-in-out;
         }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.7; }
+        }
+
         .action-bar {
             display: flex;
             align-items: center;
             gap: 12px;
         }
+
         .btn {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
-            border: none;
-            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: inherit;
         }
-        .btn-play {
-            background-color: #03dac6;
-            color: #0d0b18;
-        }
-        .btn-play:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(3, 218, 198, 0.4);
-        }
+
         .btn-save {
-            background-color: #1f1b38;
-            color: #bb86fc;
-            border: 1px solid #bb86fc;
+            background-color: rgba(255, 255, 255, 0.03);
+            color: #ffffff;
+            border: 1px solid var(--border-color);
         }
+
         .btn-save:hover {
-            background-color: #bb86fc;
-            color: #0d0b18;
+            background-color: var(--btn-hover);
+            border-color: var(--accent-secondary);
+            color: var(--accent-secondary);
         }
-        /* Main Layout */
+
+        .btn-play {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #00bfa5 100%);
+            color: #04040a;
+            box-shadow: 0 4px 12px rgba(3, 218, 198, 0.2);
+        }
+
+        .btn-play:hover {
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 16px rgba(3, 218, 198, 0.35);
+        }
+
+        .btn-play:active {
+            transform: translateY(0);
+        }
+
+        /* Main Workspace Structure */
         main {
             display: flex;
             flex: 1;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 64px);
             overflow: hidden;
+            position: relative;
         }
-        /* Sidebar File Tree */
+
+        /* Sidebar Section */
         aside {
-            width: 250px;
-            background-color: #120e24;
-            border-right: 1px solid #1f1b38;
+            width: 270px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            padding: 16px 0;
-            overflow-y: auto;
+            overflow: hidden;
+            transition: width 0.3s ease;
         }
-        .sidebar-header {
-            padding: 0 16px 12px 16px;
-            border-bottom: 1px solid #1e1a38;
-            font-size: 0.8rem;
+
+        .sidebar-header-area {
+            padding: 20px 16px 12px 16px;
+        }
+
+        .sidebar-title {
+            font-size: 0.75rem;
             font-weight: 700;
-            color: #7b7b9b;
-            letter-spacing: 1px;
+            color: var(--accent-secondary);
+            letter-spacing: 1.5px;
             text-transform: uppercase;
+            margin-bottom: 12px;
         }
+
+        /* Filter Search Input */
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px 8px 34px;
+            font-size: 0.85rem;
+            color: #ffffff;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 0 2px var(--border-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-muted);
+            width: 16px;
+            height: 16px;
+            pointer-events: none;
+        }
+
+        /* File List Container */
+        .file-list-pane {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
         .file-list {
             list-style: none;
-            margin-top: 12px;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            padding: 0 8px;
         }
+
         .file-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 6px;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.15s ease-in-out;
-            color: #bebed0;
-            font-size: 0.9rem;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #abb2bf;
+            font-size: 0.88rem;
+            position: relative;
+            user-select: none;
         }
+
         .file-item:hover {
-            background-color: rgba(187, 134, 252, 0.08);
+            background-color: rgba(255, 255, 255, 0.03);
             color: #ffffff;
         }
+
         .file-item.active {
-            background-color: rgba(3, 218, 198, 0.12);
-            color: #03dac6;
+            background-color: rgba(167, 139, 250, 0.08);
+            color: var(--accent-secondary);
             font-weight: 600;
         }
-        .file-icon {
-            font-size: 1.1rem;
+
+        .file-item.active::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 15%;
+            height: 70%;
+            width: 3px;
+            background-color: var(--accent-secondary);
+            border-radius: 0 4px 4px 0;
         }
-        /* Editor Workspace Canvas */
+
+        .file-icon-svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .file-item:hover .file-icon-svg {
+            transform: scale(1.05);
+        }
+
+        /* Editor Section Container */
         .editor-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background-color: #0d0b18;
+            background-color: var(--bg-base);
             position: relative;
+            overflow: hidden;
         }
+
         .editor-header {
-            background-color: #120e24;
-            padding: 6px 20px;
-            height: 38px;
+            background-color: var(--bg-sidebar);
+            padding: 0 20px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #1f1b38;
+            border-bottom: 1px solid var(--border-color);
         }
+
         .active-tab-title {
             font-size: 0.85rem;
-            color: #bebed0;
+            color: #ffffff;
             display: flex;
             align-items: center;
             gap: 8px;
             font-weight: 600;
         }
-        .active-tab-title::before {
-            content: "•";
-            color: #bb86fc;
-            font-size: 1.2rem;
+
+        .active-tab-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-secondary);
+            border-radius: 50%;
         }
+
+        .shortcuts-indicator {
+            font-size: 0.72rem;
+            color: var(--color-muted);
+            background-color: rgba(255, 255, 255, 0.02);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
         #editor-host {
             flex: 1;
             width: 100%;
-            height: calc(100% - 38px);
+            height: calc(100% - 44px);
+            position: relative;
         }
-        /* Custom CodeMirror Dracula Styling Override */
+
+        /* CodeMirror Theme Custom Overrides */
         .CodeMirror {
             height: 100% !important;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-            font-size: 14px;
-            background-color: #0d0b18 !important;
+            font-family: var(--font-monospace) !important;
+            font-size: 14.5px;
+            line-height: 1.6;
+            background-color: var(--bg-base) !important;
         }
+
         .CodeMirror-gutters {
-            background-color: #120e24 !important;
-            border-right: 1px solid #1f1b38 !important;
+            background-color: var(--bg-sidebar) !important;
+            border-right: 1px solid var(--border-color) !important;
         }
+
+        .CodeMirror-linenumber {
+            color: #4b5563 !important;
+            font-size: 12px;
+            padding-right: 12px;
+        }
+
+        .CodeMirror-activeLine {
+            background-color: rgba(255, 255, 255, 0.02) !important;
+        }
+
+        .CodeMirror-activeLineGutter {
+            background-color: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        /* Overlay message loader */
         .editor-overlay-message {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #0d0b18;
+            background-color: var(--bg-base);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            z-index: 100;
             gap: 16px;
-            color: #bebed0;
+            color: var(--color-text);
         }
+
         .spinner {
-            border: 4px solid rgba(187, 134, 252, 0.1);
-            width: 48px;
-            height: 48px;
+            border: 3px solid rgba(167, 139, 250, 0.1);
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            border-left-color: #bb86fc;
-            animation: spin 1s linear infinite;
+            border-left-color: var(--accent-secondary);
+            animation: spin 0.8s linear infinite;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Toast notifications system */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast {
+            background-color: var(--bg-panel);
+            color: #ffffff;
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+            border: 1px solid var(--border-color);
+            border-left-width: 4px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-info {
+            border-left-color: var(--accent-secondary);
+        }
+
+        .toast-success {
+            border-left-color: var(--accent-primary);
+        }
+
+        /* SVG Colors inside components */
+        .color-primary { color: var(--accent-primary); fill: var(--accent-primary); }
+        .color-secondary { color: var(--accent-secondary); fill: var(--accent-secondary); }
+        .color-muted { color: var(--color-muted); fill: var(--color-muted); }
     </style>
 </head>
 <body>
+    <!-- Top Modern Header -->
     <header>
         <div class="logo-section">
-            <div class="logo">JS<span>Sandbox</span> Remote</div>
-            <div class="status-badge">
+            <div class="brand-wrapper">
+                <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+                <div class="logo">JS<span>Sandbox</span></div>
+            </div>
+            <div class="status-badge" id="hud-badge">
                 <div class="status-dot" id="ws-dot"></div>
                 <span id="ws-text">Menghubungkan...</span>
             </div>
         </div>
         <div class="action-bar">
-            <button class="btn btn-save" onclick="saveCurrentFile()" title="Ctrl+S">
-                💾 Simpan Berkas
+            <button class="btn btn-save" onclick="saveCurrentFile()" title="Klik atau tekan Ctrl+S">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Simpan
             </button>
             <button class="btn btn-play" onclick="triggerPlay()">
-                ⚡ INSTANT RUN (PLAY)
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                INSTANT RUN
             </button>
         </div>
     </header>
 
+    <!-- Workspace View -->
     <main>
         <aside>
-            <div class="sidebar-header">Berkas Proyek</div>
-            <ul class="file-list" id="file-list-ul">
-                <!-- Dinamis di-render -->
-            </ul>
+            <div class="sidebar-header-area">
+                <div class="sidebar-title">Berkas Proyek</div>
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" id="search-filter" placeholder="Cari berkas..." oninput="filterFiles()">
+                </div>
+            </div>
+            
+            <div class="file-list-pane">
+                <ul class="file-list" id="file-list-ul">
+                    <!-- Loaded dynamically -->
+                </ul>
+            </div>
         </aside>
 
+        <!-- Main Editor Host Body -->
         <section class="editor-container">
             <div class="editor-header">
-                <div class="active-tab-title" id="tab-title">Tidak ada berkas terpilih</div>
+                <div class="active-tab-title">
+                    <div class="active-tab-indicator"></div>
+                    <span id="tab-title">Tidak ada berkas terpilih</span>
+                </div>
+                <div class="shortcuts-indicator">Ctrl+S untuk Simpan</div>
             </div>
-            <!-- Div Host for CodeMirror -->
+            
             <div id="editor-host"></div>
 
             <div class="editor-overlay-message" id="editor-overlay">
                 <div class="spinner"></div>
-                <p>Memuat CodeMirror Editor IDE Offline...</p>
+                <p style="font-weight:500; font-size:0.9rem;">Membuat Workspace Environment...</p>
             </div>
         </section>
     </main>
 
-    <!-- CodeMirror Local Scripts (100% Offline) -->
+    <!-- Toast Notifications HUD -->
+    <div class="toast-container" id="toast-bin"></div>
+
+    <!-- CodeMirror Local Scripts (100% Offline via local asset router) -->
     <script src="/libs/codemirror.min.js"></script>
     <script src="/libs/javascript.min.js"></script>
     <script>
         let editorInstance = null;
         let activeFilePath = null;
         let wsConnection = null;
+        let rawFilesList = []; // Memory cache for live searching
 
-        // Initialize CodeMirror immediately
+        // SVG templates to avoid external assets and retain offline performance
+        const svgTemplates = {
+            js: `<svg class="file-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                 </svg>`,
+            json: `<svg class="file-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                   </svg>`,
+            generic: `<svg class="file-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>`
+        };
+
+        // Initialize CodeMirror Editor Instance
         editorInstance = CodeMirror(document.getElementById('editor-host'), {
             value: '// Silakan pilih berkas di sidebar...',
             mode: 'javascript',
@@ -292,6 +584,7 @@
             tabSize: 4,
             indentWithTabs: false,
             lineWrapping: true,
+            styleActiveLine: true,
             extraKeys: {
                 "Ctrl-S": function(cm) {
                     saveCurrentFile();
@@ -299,14 +592,38 @@
             }
         });
 
-        // Hide overlay loader immediately (since it's loaded 100% offline!)
+        // Hide overlay loader as CodeMirror loads fully in-memory
         document.getElementById('editor-overlay').style.display = 'none';
 
-        // Bootstrap Remote Application Data
+        // Initial Data Bootstrap
         refreshFiles();
         connectWebSocket();
 
-        // WebSocket Management for Live Connection
+        // UI Toast Alert Helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-bin');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            // Build nice context svg for the toast
+            const iconSvg = type === 'success' 
+                ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+                : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+
+            toast.innerHTML = `${iconSvg} <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            // Trigger beautiful CSS animation transition
+            setTimeout(() => toast.classList.add('show'), 50);
+            
+            // Auto destroy toast
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // Live Local Client-Side WebSockets Server Connection
         function connectWebSocket() {
             const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUri = proto + '//' + window.location.host + '/ws';
@@ -315,74 +632,114 @@
             
             wsConnection.onopen = function () {
                 document.getElementById('ws-dot').className = 'status-dot connected';
-                document.getElementById('ws-text').innerText = 'Terhubung ke HP';
+                document.getElementById('ws-text').innerText = 'Terhubung';
+                document.getElementById('hud-badge').style.borderColor = 'rgba(3, 218, 198, 0.2)';
+                document.getElementById('hud-badge').style.background = 'rgba(3, 218, 198, 0.03)';
+                showToast("Terhubung ke JSBox Server!", "success");
             };
             
             wsConnection.onclose = function () {
                 document.getElementById('ws-dot').className = 'status-dot';
-                document.getElementById('ws-text').innerText = 'Terputus, mencoba lagi...';
-                setTimeout(connectWebSocket, 3000); // Retry reconnect
+                document.getElementById('ws-text').innerText = 'Mencoba Menyambung...';
+                document.getElementById('hud-badge').style.borderColor = 'var(--accent-error)';
+                document.getElementById('hud-badge').style.background = 'rgba(239, 68, 68, 0.05)';
+                setTimeout(connectWebSocket, 3000);
             };
 
             wsConnection.onerror = function (e) {
-                console.error("WS Error:", e);
+                console.error("WS Engine error: ", e);
             };
 
             wsConnection.onmessage = function (event) {
-                console.log("WebSocket Message Received:", event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === "play_status") {
+                        showToast(data.message || "Aplikasi dijalankan ulang!", "info");
+                    }
+                } catch(e) {
+                    console.log("WS raw telemetry:", event.data);
+                }
             };
         }
 
-        // Action Trigger
+        // Action: Execute instant play
         function triggerPlay() {
             saveCurrentFile().then(() => {
+                showToast("Mengirim skrip jalankan ulang...", "info");
                 if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
                     wsConnection.send(JSON.stringify({ event: "trigger_play" }));
-                    console.log("Play triggered via WebSocket");
                 } else {
                     fetch('/api/play', { method: 'POST' })
-                        .then(() => console.log('Play triggered via HTTP API fallback'))
-                        .catch(e => console.error(e));
+                        .then(() => showToast("Aplikasi dijalankan!", "success"))
+                        .catch(e => showToast("Gagal melakukan instant run di browser", "error"));
                 }
             });
         }
 
+        // Render project explorer tree
+        function renderFilesList(files) {
+            const ul = document.getElementById('file-list-ul');
+            ul.innerHTML = '';
+            
+            if (files.length === 0) {
+                ul.innerHTML = `<li class="file-item" style="color:var(--color-muted); pointer-events: none; justify-content: center;">Tidak ada berkas cocok</li>`;
+                return;
+            }
+            
+            files.forEach(file => {
+                const li = document.createElement('li');
+                li.className = 'file-item' + (activeFilePath === file.name ? ' active' : '');
+                
+                let iconTemplate = svgTemplates.generic;
+                if (file.name.endsWith('.js')) {
+                    iconTemplate = svgTemplates.js;
+                } else if (file.name.endsWith('.json')) {
+                    iconTemplate = svgTemplates.json;
+                }
+                
+                li.innerHTML = `${iconTemplate} <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>`;
+                li.onclick = () => selectFile(file.name);
+                ul.appendChild(li);
+            });
+        }
+
+        // Filter and Search mechanism
+        function filterFiles() {
+            const searchVal = document.getElementById('search-filter').value.toLowerCase().trim();
+            const filtered = rawFilesList.filter(f => f.name.toLowerCase().includes(searchVal));
+            renderFilesList(filtered);
+        }
+
+        // Fetch structure asynchronously 
         function refreshFiles() {
             fetch('/api/files')
                 .then(r => r.json())
                 .then(files => {
-                    const ul = document.getElementById('file-list-ul');
-                    ul.innerHTML = '';
-                    
-                    files.forEach(file => {
-                        const li = document.createElement('li');
-                        li.className = 'file-item' + (activeFilePath === file.name ? ' active' : '');
-                        
-                        const isJs = file.name.endsWith('.js');
-                        const isJson = file.name.endsWith('.json');
-                        const icon = isJs ? '📜' : (isJson ? '⚙️' : '📄');
-                        
-                        li.innerHTML = `<span class="file-icon">${icon}</span> ${file.name}`;
-                        li.onclick = () => selectFile(file.name);
-                        ul.appendChild(li);
-                    });
+                    rawFilesList = files;
+                    filterFiles(); // Render filtered files
 
+                    // Auto load main script
                     if (!activeFilePath && files.length > 0) {
                         const hasMain = files.find(f => f.name === 'main.js');
                         selectFile(hasMain ? 'main.js' : files[0].name);
                     }
                 })
-                .catch(err => console.error("Error refreshing file listing:", err));
+                .catch(err => {
+                    console.error("Gagal refresh folder proyek:", err);
+                    showToast("Gagal menyinkronkan file sidebar", "error");
+                });
         }
 
+        // Active workspace file switcher
         function selectFile(filename) {
             if (activeFilePath === filename) return;
             
             const loadSelectedFile = () => {
                 activeFilePath = filename;
                 
+                // Switch styling state
                 document.querySelectorAll('.file-item').forEach(item => {
-                    if (item.innerText.includes(filename)) {
+                    if (item.innerText.trim() === filename) {
                         item.classList.add('active');
                     } else {
                         item.classList.remove('active');
@@ -397,15 +754,20 @@
                         if (editorInstance) {
                             editorInstance.setValue(code);
                             
-                            // Check correct mode
+                            // Context Mode Setting
                             let mode = 'javascript';
                             if (filename.endsWith('.json')) {
                                 mode = { name: "javascript", json: true };
                             }
                             editorInstance.setOption("mode", mode);
+                            
+                            // Reset undo stack for new file to prevent unexpected global undo across different files
+                            editorInstance.getDoc().clearHistory();
                         }
                     })
-                    .catch(err => alert("Gagal memuat berkas: " + err));
+                    .catch(err => {
+                        showToast("Gagal memuat konten file", "error");
+                    });
             };
 
             if (activeFilePath) {
@@ -415,9 +777,10 @@
             }
         }
 
-        // Auto Save on visibility change or blur
+        // Event listener to backup/auto-save trigger
         window.addEventListener('beforeunload', saveCurrentFile);
 
+        // Core save action
         function saveCurrentFile() {
             if (!activeFilePath || !editorInstance) return Promise.resolve();
             
@@ -435,12 +798,16 @@
             })
             .then(res => {
                 if (res.ok) {
-                    console.log('Berkas ' + activeFilePath + ' disimpan!');
+                    console.log('Berkas ' + activeFilePath + ' tersimpan!');
+                    showToast(`Tersimpan: ${activeFilePath}`, "success");
                 } else {
-                    console.error('Gagal menyimpan otomatis.');
+                    showToast("Kesalahan eksternal saat menyimpan berkas", "error");
                 }
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                showToast("Gagal menyambung untuk menyimpan berkas", "error");
+            });
         }
     </script>
 </body>
