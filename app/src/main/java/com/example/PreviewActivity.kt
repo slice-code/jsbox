@@ -11,7 +11,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -57,7 +59,19 @@ class PreviewActivity : ComponentActivity() {
 
         setContent {
             MyApplicationTheme {
-                PreviewRunnerScreen(projectName, projectPath, onBack = { finish() })
+                PreviewRunnerScreen(
+                    projectName = projectName,
+                    projectPath = projectPath,
+                    onBack = {
+                        if (isTaskRoot) {
+                            val mainIntent = Intent(this@PreviewActivity, MainActivity::class.java).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            }
+                            startActivity(mainIntent)
+                        }
+                        finish()
+                    }
+                )
             }
         }
     }
@@ -78,9 +92,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
         consoleLogs.add(message)
     }
 
-    // Material 3 Bottom Sheet scaffold state
-    val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)
-    val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+    var isConsoleExpanded by remember { mutableStateOf(false) }
 
     // Manage Screen Keep Awake control based on remote server status
     val activity = LocalContext.current as? ComponentActivity
@@ -169,81 +181,20 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
         if (file.exists()) file.readText() else ""
     }
 
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = 64.dp,
-        sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        sheetContainerColor = Color(0xFF1E1B38),
-        sheetContentColor = Color.White,
-        sheetContent = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .padding(horizontal = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.List, 
-                            contentDescription = "Console", 
-                            tint = Color(0xFF03DAC6),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Konsol Log & Debugger", 
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Color.White
-                        )
-                    }
-                    
-                    Row {
-                        IconButton(onClick = { consoleLogs.clear() }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Clear", tint = Color(0xFFCF6679))
-                        }
-                    }
-                }
-                
-                Divider(color = Color(0xFF444466))
+    val activityCtx = context as? ComponentActivity
+    val isTaskRoot = activityCtx?.isTaskRoot == true
 
-                if (consoleLogs.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "Belum ada log aktivitas console.log()",
-                            fontSize = 12.sp,
-                            color = Color(0xFF8888AA)
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        items(consoleLogs) { log ->
-                            Text(
-                                text = log,
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 11.sp,
-                                color = if (log.contains("ERROR") || log.contains("Exception")) Color(0xFFCF6679) else Color(0xFFBB86FC),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFF0F0C20).copy(alpha = 0.5f))
-                                    .padding(6.dp)
-                            )
-                        }
-                    }
-                }
+    BackHandler {
+        if (isTaskRoot) {
+            val mainIntent = Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
-        },
+            context.startActivity(mainIntent)
+        }
+        onBack()
+    }
+
+    Scaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -262,7 +213,15 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (isTaskRoot) {
+                            val mainIntent = Intent(context, MainActivity::class.java).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            }
+                            context.startActivity(mainIntent)
+                        }
+                        onBack()
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = Color.White)
                     }
                 },
@@ -273,222 +232,331 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
         },
         containerColor = Color(0xFF0F0C20)
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            AndroidView(
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.databaseEnabled = true
-                        settings.allowFileAccess = true
-                        settings.allowContentAccess = true
-                        settings.allowFileAccessFromFileURLs = true
-                        settings.allowUniversalAccessFromFileURLs = true
-                        settings.useWideViewPort = true
-                        settings.loadWithOverviewMode = true
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                            WebView.setWebContentsDebuggingEnabled(true)
-                        }
-                        setBackgroundColor(0) // Transparent background to match theme color seamlessly
-
-                        // Inject custom web Chrome client to capture console.log statements
-                        webChromeClient = object : WebChromeClient() {
-                            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                                if (consoleMessage != null) {
-                                    val level = consoleMessage.messageLevel().name
-                                    val msg = "[${level}] ${consoleMessage.message()} (${consoleMessage.sourceId().substringAfterLast("/")}:${consoleMessage.lineNumber()})"
-                                    addLog(msg)
-                                }
-                                return true
+            // Webview takes the rest of the height
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.databaseEnabled = true
+                            settings.allowFileAccess = true
+                            settings.allowContentAccess = true
+                            settings.allowFileAccessFromFileURLs = true
+                            settings.allowUniversalAccessFromFileURLs = true
+                            settings.useWideViewPort = true
+                            settings.loadWithOverviewMode = true
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                             }
-                        }
-
-                        webViewClient = object : WebViewClient() {
-                            override fun onPageFinished(view: WebView?, url: String?) {
-                                super.onPageFinished(view, url)
-                                addLog("✅ Sandbox DOM dimuat sempurna.")
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                WebView.setWebContentsDebuggingEnabled(true)
                             }
-                            
-                            override fun onReceivedError(
-                                view: WebView?,
-                                request: WebResourceRequest?,
-                                error: WebResourceError?
-                            ) {
-                                super.onReceivedError(view, request, error)
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    addLog("❌ WebResourceError [${error?.errorCode}]: ${error?.description}")
-                                }
-                            }
-                        }
+                            setBackgroundColor(0) // Transparent background to match theme color seamlessly
 
-                        // Register modern high fidelity Android Bridge APIs
-                        addJavascriptInterface(object : Any() {
-                            
-                            @JavascriptInterface
-                            fun showToast(msg: String) {
-                                Handler(Looper.getMainLooper()).post {
-                                    Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+                            // Inject custom web Chrome client to capture console.log statements
+                            webChromeClient = object : WebChromeClient() {
+                                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                                    if (consoleMessage != null) {
+                                        val level = consoleMessage.messageLevel().name
+                                        val msg = "[${level}] ${consoleMessage.message()} (${consoleMessage.sourceId().substringAfterLast("/")}:${consoleMessage.lineNumber()})"
+                                        addLog(msg)
+                                    }
+                                    return true
                                 }
                             }
 
-                            @JavascriptInterface
-                            fun vibrate(ms: Long) {
-                                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                    val vibratorManager = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-                                    vibratorManager?.defaultVibrator
-                                } else {
+                            webViewClient = object : WebViewClient() {
+                                override fun onPageFinished(view: WebView?, url: String?) {
+                                    super.onPageFinished(view, url)
+                                    addLog("✅ Sandbox DOM dimuat sempurna.")
+                                }
+                                
+                                override fun onReceivedError(
+                                    view: WebView?,
+                                    request: WebResourceRequest?,
+                                    error: WebResourceError?
+                                ) {
+                                    super.onReceivedError(view, request, error)
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        addLog("❌ WebResourceError [${error?.errorCode}]: ${error?.description}")
+                                    }
+                                }
+                            }
+
+                            // Register modern high fidelity Android Bridge APIs
+                            addJavascriptInterface(object : Any() {
+                                
+                                @JavascriptInterface
+                                fun showToast(msg: String) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+
+                                @JavascriptInterface
+                                fun vibrate(ms: Long) {
+                                    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        val vibratorManager = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                                        vibratorManager?.defaultVibrator
+                                    } else {
+                                        @Suppress("DEPRECATION")
+                                        ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                                    }
                                     @Suppress("DEPRECATION")
-                                    ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                                    vibrator?.vibrate(ms)
                                 }
-                                @Suppress("DEPRECATION")
-                                vibrator?.vibrate(ms)
-                            }
 
-                            @JavascriptInterface
-                            fun createAlarm(label: String, hour: Int, minute: Int) {
-                                Handler(Looper.getMainLooper()).post {
-                                    try {
-                                        val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                                        val intent = Intent(ctx, AlarmReceiver::class.java).apply {
-                                            putExtra("EXTRA_LABEL", label)
-                                        }
-                                        
-                                        val pendingIntent = PendingIntent.getBroadcast(
-                                            ctx,
-                                            System.currentTimeMillis().toInt(),
-                                            intent,
-                                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                                        )
-
-                                        val calendar = Calendar.getInstance().apply {
-                                            set(Calendar.HOUR_OF_DAY, hour)
-                                            set(Calendar.MINUTE, minute)
-                                            set(Calendar.SECOND, 0)
-                                            if (before(Calendar.getInstance())) {
-                                                add(Calendar.DATE, 1)
+                                @JavascriptInterface
+                                fun createAlarm(label: String, hour: Int, minute: Int) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        try {
+                                            val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                                            val intent = Intent(ctx, AlarmReceiver::class.java).apply {
+                                                putExtra("EXTRA_LABEL", label)
                                             }
-                                        }
+                                            
+                                            val pendingIntent = PendingIntent.getBroadcast(
+                                                ctx,
+                                                System.currentTimeMillis().toInt(),
+                                                intent,
+                                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                            )
 
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                            alarmManager.setExactAndAllowWhileIdle(
-                                                AlarmManager.RTC_WAKEUP,
-                                                calendar.timeInMillis,
-                                                pendingIntent
-                                            )
-                                        } else {
-                                            alarmManager.setExact(
-                                                AlarmManager.RTC_WAKEUP,
-                                                calendar.timeInMillis,
-                                                pendingIntent
-                                            )
+                                            val calendar = Calendar.getInstance().apply {
+                                                set(Calendar.HOUR_OF_DAY, hour)
+                                                set(Calendar.MINUTE, minute)
+                                                set(Calendar.SECOND, 0)
+                                                if (before(Calendar.getInstance())) {
+                                                    add(Calendar.DATE, 1)
+                                                }
+                                            }
+
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                                alarmManager.setExactAndAllowWhileIdle(
+                                                    AlarmManager.RTC_WAKEUP,
+                                                    calendar.timeInMillis,
+                                                    pendingIntent
+                                                )
+                                            } else {
+                                                alarmManager.setExact(
+                                                    AlarmManager.RTC_WAKEUP,
+                                                    calendar.timeInMillis,
+                                                    pendingIntent
+                                                )
+                                            }
+                                            addLog("⏰ Alarm diset: $label pada ${String.format("%02d:%02d", hour, minute)}")
+                                        } catch (e: Exception) {
+                                            addLog("❌ Gagal menyetel Alarm: ${e.message}")
                                         }
-                                        addLog("⏰ Alarm diset: $label pada ${String.format("%02d:%02d", hour, minute)}")
-                                    } catch (e: Exception) {
-                                        addLog("❌ Gagal menyetel Alarm: ${e.message}")
                                     }
                                 }
-                            }
 
-                            @JavascriptInterface
-                            fun startBackgroundService(filename: String) {
-                                Handler(Looper.getMainLooper()).post {
-                                    try {
-                                        val intent = Intent(ctx, JsBackgroundService::class.java).apply {
-                                            putExtra("PROJECT_NAME", projectName)
-                                            putExtra("SCRIPT_NAME", filename)
-                                            putExtra("PROJECT_PATH", projectPath)
+                                @JavascriptInterface
+                                fun startBackgroundService(filename: String) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        try {
+                                            val intent = Intent(ctx, JsBackgroundService::class.java).apply {
+                                                putExtra("PROJECT_NAME", projectName)
+                                                putExtra("SCRIPT_NAME", filename)
+                                                putExtra("PROJECT_PATH", projectPath)
+                                            }
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                ctx.startForegroundService(intent)
+                                            } else {
+                                                ctx.startService(intent)
+                                            }
+                                            addLog("⚙️ Background Service running: $filename")
+                                        } catch (e: Exception) {
+                                            addLog("❌ Gagal memulai Service Latar Belakang: ${e.message}")
                                         }
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                            ctx.startForegroundService(intent)
-                                        } else {
-                                            ctx.startService(intent)
-                                        }
-                                        addLog("⚙️ Background Service running: $filename")
-                                    } catch (e: Exception) {
-                                        addLog("❌ Gagal memulai Service Latar Belakang: ${e.message}")
                                     }
                                 }
-                            }
-                            
-                            @JavascriptInterface
-                            fun logError(err: String) {
-                                addLog("❌ JS Runtime Exception:\n$err")
-                            }
-                        }, "android")
+                                
+                                @JavascriptInterface
+                                fun logError(err: String) {
+                                    addLog("❌ JS Runtime Exception:\n$err")
+                                }
+                            }, "android")
 
-                        webViewInstance = this
+                            webViewInstance = this
 
-                        // Construct safe viewport-responsive HTML template shell
-                        val htmlShellContent = """
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <meta charset="utf-8">
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                                <style>
-                                    body {
-                                        margin: 0;
-                                        padding: 16px;
-                                        background-color: #121214;
-                                        color: #ffffff;
-                                        font-family: system-ui, -apple-system, sans-serif;
-                                    }
-                                    button {
-                                        font-family: inherit;
-                                        cursor: pointer;
-                                    }
-                                </style>
-                                <script>
-                                    // Setup standard error telemetry
-                                    window.addEventListener('error', function(e) {
-                                        console.error("Kesalahan: " + e.message + " pada " + e.filename + ":" + e.lineno);
-                                        if (window.android && window.android.logError) {
-                                            var stack = (e.error && e.error.stack) ? e.error.stack : "";
-                                            window.android.logError(e.message + " (" + e.filename.split('/').pop() + ":" + e.lineno + ")\n" + stack);
+                            // Construct safe viewport-responsive HTML template shell
+                            val htmlShellContent = """
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <meta charset="utf-8">
+                                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                                    <style>
+                                        body {
+                                            margin: 0;
+                                            padding: 16px;
+                                            background-color: #121214;
+                                            color: #ffffff;
+                                            font-family: system-ui, -apple-system, sans-serif;
                                         }
-                                    });
-                                    window.addEventListener('unhandledrejection', function(e) {
-                                        console.error("Unhandled Promise Rejection: " + e.reason);
-                                        if (window.android && window.android.logError) {
-                                            var reasonStr = e.reason ? (e.reason.message || e.reason) : "unknown";
-                                            var stackStr = (e.reason && e.reason.stack) ? e.reason.stack : "";
-                                            window.android.logError("Unhandled Rejection: " + reasonStr + "\n" + stackStr);
+                                        button {
+                                            font-family: inherit;
+                                            cursor: pointer;
                                         }
-                                    });
-                                </script>
-                                <script>
-                                    ${JsLibrary.EL_JS_CONTENT}
-                                </script>
-                            </head>
-                            <body>
-                                <div id="app"></div>
-                                <script type="module">
-                                    $userScript
-                                </script>
-                            </body>
-                            </html>
-                        """.trimIndent()
+                                    </style>
+                                    <script>
+                                        // Setup standard error telemetry
+                                        window.addEventListener('error', function(e) {
+                                            console.error("Kesalahan: " + e.message + " pada " + e.filename + ":" + e.lineno);
+                                            if (window.android && window.android.logError) {
+                                                var stack = (e.error && e.error.stack) ? e.error.stack : "";
+                                                window.android.logError(e.message + " (" + e.filename.split('/').pop() + ":" + e.lineno + ")\n" + stack);
+                                            }
+                                        });
+                                        window.addEventListener('unhandledrejection', function(e) {
+                                            console.error("Unhandled Promise Rejection: " + e.reason);
+                                            if (window.android && window.android.logError) {
+                                                var reasonStr = e.reason ? (e.reason.message || e.reason) : "unknown";
+                                                var stackStr = (e.reason && e.reason.stack) ? e.reason.stack : "";
+                                                window.android.logError("Unhandled Rejection: " + reasonStr + "\n" + stackStr);
+                                            }
+                                        });
+                                    </script>
+                                    <script>
+                                        ${JsLibrary.EL_JS_CONTENT}
+                                    </script>
+                                </head>
+                                <body>
+                                    <div id="app"></div>
+                                    <script type="module">
+                                        $userScript
+                                    </script>
+                                </body>
+                                </html>
+                            """.trimIndent()
 
-                        loadDataWithBaseURL(
-                            "file://$projectPath/",
-                            htmlShellContent,
-                            "text/html",
-                            "UTF-8",
-                            null
+                            loadDataWithBaseURL(
+                                "file://$projectPath/",
+                                htmlShellContent,
+                                "text/html",
+                                "UTF-8",
+                                null
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("renderer_webview")
+                )
+            }
+
+            // Collapsible Console log panel at bottom
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(if (isConsoleExpanded) 280.dp else 48.dp)
+                    .background(Color(0xFF1E1B38))
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Console header row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clickable { isConsoleExpanded = !isConsoleExpanded },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.List, 
+                            contentDescription = "Console", 
+                            tint = Color(0xFF03DAC6),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Konsol Log & Debugger", 
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                        if (consoleLogs.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFF03DAC6).copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${consoleLogs.size}",
+                                    color = Color(0xFF03DAC6),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isConsoleExpanded) {
+                            IconButton(
+                                onClick = { consoleLogs.clear() },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Bersihkan", tint = Color(0xFFCF6679), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        Icon(
+                            imageVector = if (isConsoleExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                            contentDescription = if (isConsoleExpanded) "Minimalkan" else "Perbesar",
+                            tint = Color(0xFFBEBED0),
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .testTag("renderer_webview")
-            )
+                }
+                
+                if (isConsoleExpanded) {
+                    Divider(color = Color(0xFF444466))
+                    
+                    if (consoleLogs.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Belum ada log aktivitas console.log()",
+                                fontSize = 12.sp,
+                                color = Color(0xFF8888AA)
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(consoleLogs) { log ->
+                                Text(
+                                    text = log,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp,
+                                    color = if (log.contains("ERROR") || log.contains("Exception")) Color(0xFFCF6679) else Color(0xFFBB86FC),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF0F0C20).copy(alpha = 0.5f))
+                                        .padding(6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
