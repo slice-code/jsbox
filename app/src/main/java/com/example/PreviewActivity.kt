@@ -82,6 +82,28 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
     val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
 
+    // Manage Screen Keep Awake control based on remote server status
+    val activity = LocalContext.current as? ComponentActivity
+    LaunchedEffect(Unit) {
+        activity?.window?.let { win ->
+            if (RemoteEditorService.isServerActive && RemoteEditorService.activeConnections > 0) {
+                win.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+        RemoteEditorService.serviceUIFlow.collect {
+            val shouldKeep = RemoteEditorService.isServerActive && RemoteEditorService.activeConnections > 0
+            activity?.window?.let { win ->
+                if (shouldKeep) {
+                    win.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+        }
+    }
+
     // Listen to background service messages and pipe them back into executing WebView page
     LaunchedEffect(webViewInstance) {
         if (webViewInstance != null) {
@@ -93,6 +115,49 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                         "if (window.onServiceMessage) { window.onServiceMessage('$formattedMsg'); }", 
                         null
                     )
+                }
+            }
+        }
+    }
+
+    // Collect Remote Play trigger for hot-reloading (Instant Run runtime!)
+    LaunchedEffect(webViewInstance) {
+        if (webViewInstance != null) {
+            RemotePlayManager.playTriggerFlow.collect {
+                val file = File(projectPath, "main.js")
+                val latestScriptContent = if (file.exists()) file.readText() else ""
+                
+                val escapedJsStr = latestScriptContent
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "")
+                
+                val hotsyncScript = """
+                    (function() {
+                        try {
+                            const appDiv = document.getElementById('app');
+                            if (appDiv) {
+                                appDiv.innerHTML = '';
+                            }
+                            const oldScripts = document.querySelectorAll('script[type="module"]');
+                            oldScripts.forEach(s => s.remove());
+                            
+                            const newScript = document.createElement('script');
+                            newScript.type = 'module';
+                            newScript.textContent = "$escapedJsStr";
+                            document.body.appendChild(newScript);
+                            
+                            console.log('🔄 Hot reloaded main.js via Instant Run!');
+                        } catch(e) {
+                            console.error('Instant Run Error:', e);
+                        }
+                    })();
+                """.trimIndent()
+                
+                webViewInstance?.post {
+                    webViewInstance?.evaluateJavascript(hotsyncScript, null)
+                    addLog("⚡ Instant Run dipicu: Menyinkronkan dan menjalankan ulang skrip terbaru.")
                 }
             }
         }
@@ -397,6 +462,9 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                                             window.android.logError("Unhandled Rejection: " + reasonStr + "\n" + stackStr);
                                         }
                                     });
+                                </script>
+                                <script>
+                                    ${JsLibrary.EL_JS_CONTENT}
                                 </script>
                             </head>
                             <body>

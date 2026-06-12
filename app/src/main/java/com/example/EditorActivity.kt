@@ -1,5 +1,8 @@
 package com.example
 
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,10 +22,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,6 +67,29 @@ class EditorActivity : ComponentActivity() {
 @Composable
 fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -> Unit) {
     val context = LocalContext.current
+    
+    // Manage Screen Keep Awake control based on remote server status
+    val activity = LocalContext.current as? ComponentActivity
+    LaunchedEffect(Unit) {
+        activity?.window?.let { win ->
+            if (RemoteEditorService.isServerActive && RemoteEditorService.activeConnections > 0) {
+                win.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+        RemoteEditorService.serviceUIFlow.collect {
+            val shouldKeep = RemoteEditorService.isServerActive && RemoteEditorService.activeConnections > 0
+            activity?.window?.let { win ->
+                if (shouldKeep) {
+                    win.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+        }
+    }
+
     var filesList by remember { mutableStateOf<List<File>>(emptyList()) }
     var activeFile by remember { mutableStateOf<File?>(null) }
     
@@ -195,6 +223,8 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
                         .background(Color(0xFF15122A))
                 ) {
                     FileManagerPane(
+                        projectPath = projectPath,
+                        projectName = projectName,
                         files = filesList,
                         activeFile = activeFile,
                         onFileClick = { f -> switchActiveFile(f) },
@@ -245,6 +275,8 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
                             .padding(end = 4.dp)
                     ) {
                         FileManagerPane(
+                            projectPath = projectPath,
+                            projectName = projectName,
                             files = filesList,
                             activeFile = activeFile,
                             onFileClick = { f ->
@@ -333,7 +365,140 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
 }
 
 @Composable
+fun RemoteControlPanel(projectPath: String, projectName: String) {
+    val context = LocalContext.current
+    var isServerActive by remember { mutableStateOf(RemoteEditorService.isServerActive) }
+    var ipAddress by remember { mutableStateOf(RemoteEditorService.hostIpAddress) }
+    var activeConnections by remember { mutableStateOf(RemoteEditorService.activeConnections) }
+
+    LaunchedEffect(Unit) {
+        RemoteEditorService.serviceUIFlow.collect {
+            isServerActive = RemoteEditorService.isServerActive
+            ipAddress = RemoteEditorService.hostIpAddress
+            activeConnections = RemoteEditorService.activeConnections
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+            .testTag("remote_control_card"),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1B182E)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E2A4E)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(if (isServerActive) Color(0xFF03DAC6) else Color(0xFFCF6679))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Remote Editor",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Switch(
+                    checked = isServerActive,
+                    onCheckedChange = { checked ->
+                        val serviceIntent = Intent(context, RemoteEditorService::class.java).apply {
+                            if (checked) {
+                                putExtra("PROJECT_PATH", projectPath)
+                                putExtra("PROJECT_NAME", projectName)
+                            } else {
+                                action = "STOP_SERVER"
+                            }
+                        }
+                        if (checked) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                context.startForegroundService(serviceIntent)
+                            } else {
+                                context.startService(serviceIntent)
+                            }
+                        } else {
+                            context.startService(serviceIntent)
+                        }
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color(0xFF0F0C20),
+                        checkedTrackColor = Color(0xFF03DAC6),
+                        uncheckedThumbColor = Color(0xFFBEBED0),
+                        uncheckedTrackColor = Color(0xFF15122A)
+                    ),
+                    modifier = Modifier.scale(0.8f).testTag("remote_server_switch")
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            if (isServerActive) {
+                val serverUrl = "http://$ipAddress:5009"
+                Column {
+                    Text(
+                        text = "Akses browser Wi-Fi Anda ke:",
+                        fontSize = 10.sp,
+                        color = Color(0xFFBEBED0)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = serverUrl,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = Color(0xFFBB86FC),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clickable {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("URL Remote Editor", serverUrl)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(context, "URL Remote disalin!", Toast.LENGTH_SHORT).show()
+                            }
+                    )
+                    if (activeConnections > 0) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "⚡ Terhubung: $activeConnections PC",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF03DAC6)
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "💤 Menunggu koneksi PC...",
+                            fontSize = 11.sp,
+                            color = Color(0xFFBEBED0)
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "Server tidak aktif. Hidupkan tombol untuk mengedit proyek ini via browser laptop/PC.",
+                    fontSize = 10.sp,
+                    color = Color(0xFF8888AA),
+                    lineHeight = 1.4.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun FileManagerPane(
+    projectPath: String,
+    projectName: String,
     files: List<File>,
     activeFile: File?,
     onFileClick: (File) -> Unit,
@@ -345,6 +510,10 @@ fun FileManagerPane(
             .fillMaxSize()
             .padding(12.dp)
     ) {
+        RemoteControlPanel(projectPath = projectPath, projectName = projectName)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

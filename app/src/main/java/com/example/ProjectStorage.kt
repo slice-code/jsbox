@@ -287,5 +287,11 @@ object ProjectStorage {
                 }, 1000);
             """.trimIndent())
         }
+
+        // 5. Create el.js library inside the project directory so it shows up in the editor
+        val libraryFile = File(demoProjectDir, "el.js")
+        if (!libraryFile.exists()) {
+            libraryFile.writeText(JsLibrary.EL_JS_CONTENT)
+        }
     }
 }

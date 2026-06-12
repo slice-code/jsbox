@@ -1,3 +1,9 @@
+import java.net.URL
+import java.net.HttpURLConnection
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -123,3 +129,51 @@ dependencies {
   "ksp"(libs.moshi.kotlin.codegen)
   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
 }
+
+tasks.register("downloadOfflineEditor") {
+    outputs.dir("src/main/assets/web-ide/libs")
+    
+    doLast {
+        val outputDir = File("app/src/main/assets/web-ide/libs").let {
+            if (it.parentFile?.exists() == true) it else File("src/main/assets/web-ide/libs")
+        }
+        val targetDir = File(outputDir, ".")
+        if (!targetDir.exists()) {
+            targetDir.mkdirs()
+        }
+
+        val filesToDownload = mapOf(
+            "codemirror.min.js" to "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js",
+            "codemirror.min.css" to "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css",
+            "javascript.min.js" to "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js",
+            "dracula.min.css" to "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/dracula.min.css"
+        )
+
+        filesToDownload.forEach { (name, urlString) ->
+            val destinationFile = File(targetDir, name)
+            if (!destinationFile.exists()) {
+                println("Downloading $name from $urlString...")
+                try {
+                    val url = URL(urlString)
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connect()
+                    connection.inputStream.use { input: InputStream ->
+                        destinationFile.outputStream().use { output: OutputStream ->
+                            input.copyTo(output)
+                        }
+                    }
+                    println("Successfully downloaded $name")
+                } catch (e: Exception) {
+                    println("Failed to download $name: ${e.message}")
+                }
+            } else {
+                println("$name already exists, skipping.")
+            }
+        }
+    }
+}
+
+tasks.matching { it.name == "preBuild" }.all {
+    dependsOn("downloadOfflineEditor")
+}
+

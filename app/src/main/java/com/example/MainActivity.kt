@@ -517,27 +517,70 @@ fun DashboardScreen() {
                             copyUriToFile(selectedIconUri!!, destFile)
                         }
 
+                        // Write el.js inside the newly created project folder so it lists in the editor
+                        val libraryFile = File(projectDir, "el.js")
+                        libraryFile.writeText(JsLibrary.EL_JS_CONTENT)
+
                         // main.js
                         val main = File(projectDir, "main.js")
                         main.writeText("""
                             // Custom main entry file for ${newProjName.trim()}
-                            const app = document.getElementById('app');
+                            // Built with el.js lightweight DOM library (slice-code.com)
                             
-                            const el = document.createElement('div');
-                            el.style.padding = '20px';
-                            el.style.textAlign = 'center';
+                            const app = el(document.getElementById('app'));
                             
-                            const h = document.createElement('h2');
-                            h.innerText = 'Halo, Selamat Datang!';
-                            h.style.color = '#03dac6';
-                            el.appendChild(h);
-                            
-                            const p = document.createElement('p');
-                            p.innerText = 'Ini adalah workspace aplikasi kustom baru Anda.';
-                            p.style.color = '#cccccc';
-                            el.appendChild(p);
-                            
-                            app.appendChild(el);
+                            // Let's create a beautiful greeting card using the global 'el' library
+                            const container = el('div')
+                                .css({
+                                    padding: '24px',
+                                    textAlign: 'center',
+                                    background: 'linear-gradient(135deg, #1e1e2e, #121214)',
+                                    borderRadius: '16px',
+                                    border: '1px solid #333344',
+                                    boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
+                                    marginTop: '20px'
+                                });
+
+                            const title = el('h2')
+                                .text('Halo, Selamat Datang!')
+                                .css({
+                                    color: '#03dac6',
+                                    margin: '0 0 12px 0',
+                                    fontSize: '22px'
+                                });
+
+                            const description = el('p')
+                                .text('Workspace custom baru Anda dengan library DOM el.js bawaan secara global.')
+                                .css({
+                                    color: '#cccccc',
+                                    margin: '0 0 20px 0',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5'
+                                });
+
+                            const testBtn = el('button')
+                                .text('Getarkan Perangkat 📳')
+                                .css({
+                                    padding: '12px 24px',
+                                    backgroundColor: '#03dac6',
+                                    color: '#121212',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    fontWeight: 'bold',
+                                    transition: 'transform 0.2s'
+                                })
+                                .click(() => {
+                                    if (window.android && window.android.vibrate) {
+                                        window.android.vibrate(200);
+                                        window.android.showToast('Perangkat bergetar!');
+                                    } else {
+                                        console.log('Vibrate triggered');
+                                    }
+                                });
+
+                            container.child([title, description, testBtn]);
+                            app.child(container);
                         """.trimIndent())
 
                         showCreateDialog = false

@@ -113,7 +113,7 @@ class JsBackgroundService : Service() {
         // Initialize page BaseURL pointing directly to the project directory to support relative module imports
         webView.loadDataWithBaseURL(
             "file://$projectPath/",
-            "<html><head></head><body>Headless Background Service</body></html>",
+            "<html><head><script>${JsLibrary.EL_JS_CONTENT}</script></head><body>Headless Background Service</body></html>",
             "text/html",
             "UTF-8",
             null
