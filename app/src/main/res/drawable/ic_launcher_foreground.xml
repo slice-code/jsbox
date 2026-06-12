@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Stylized, bold glowing JS Code Bracket vector (< / >) -->
+    <path
+        android:pathData="M34,36 L18,54 L34,72 M74,36 L90,54 L74,72 M44,78 L64,30"
+        android:strokeWidth="7"
+        android:strokeColor="#03DAC6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+</vector>

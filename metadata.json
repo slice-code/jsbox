@@ -1,0 +1,6 @@
+{
+  "name": "JS-Sandbox App Builder",
+  "description": "Android application that builds, edits, and runs custom DOM-based JavaScript apps natively with device bridges.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
