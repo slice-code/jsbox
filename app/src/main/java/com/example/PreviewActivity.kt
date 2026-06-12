@@ -218,12 +218,20 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                     WebView(ctx).apply {
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
+                        settings.databaseEnabled = true
                         settings.allowFileAccess = true
                         settings.allowContentAccess = true
                         settings.allowFileAccessFromFileURLs = true
                         settings.allowUniversalAccessFromFileURLs = true
                         settings.useWideViewPort = true
                         settings.loadWithOverviewMode = true
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            WebView.setWebContentsDebuggingEnabled(true)
+                        }
+                        setBackgroundColor(0) // Transparent background to match theme color seamlessly
 
                         // Inject custom web Chrome client to capture console.log statements
                         webChromeClient = object : WebChromeClient() {
@@ -372,18 +380,29 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                                         cursor: pointer;
                                     }
                                 </style>
+                                <script>
+                                    // Setup standard error telemetry
+                                    window.addEventListener('error', function(e) {
+                                        console.error("Kesalahan: " + e.message + " pada " + e.filename + ":" + e.lineno);
+                                        if (window.android && window.android.logError) {
+                                            var stack = (e.error && e.error.stack) ? e.error.stack : "";
+                                            window.android.logError(e.message + " (" + e.filename.split('/').pop() + ":" + e.lineno + ")\n" + stack);
+                                        }
+                                    });
+                                    window.addEventListener('unhandledrejection', function(e) {
+                                        console.error("Unhandled Promise Rejection: " + e.reason);
+                                        if (window.android && window.android.logError) {
+                                            var reasonStr = e.reason ? (e.reason.message || e.reason) : "unknown";
+                                            var stackStr = (e.reason && e.reason.stack) ? e.reason.stack : "";
+                                            window.android.logError("Unhandled Rejection: " + reasonStr + "\n" + stackStr);
+                                        }
+                                    });
+                                </script>
                             </head>
                             <body>
                                 <div id="app"></div>
                                 <script type="module">
-                                    try {
-                                        $userScript
-                                    } catch(e) {
-                                        console.error(e);
-                                        if (window.android && window.android.logError) {
-                                            window.android.logError(e.message + '\n' + e.stack);
-                                        }
-                                    }
+                                    $userScript
                                 </script>
                             </body>
                             </html>

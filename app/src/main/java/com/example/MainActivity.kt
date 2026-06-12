@@ -5,14 +5,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -29,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -71,6 +78,30 @@ fun DashboardScreen() {
     var showCreateDialog by remember { mutableStateOf(false) }
     var selectedProjectForOptions by remember { mutableStateOf<Project?>(null) }
     var showRenameDialog by remember { mutableStateOf<Project?>(null) }
+    
+    var selectedIconUri by remember { mutableStateOf<Uri?>(null) }
+    var newProjIcon by remember { mutableStateOf("folder") }
+
+    val copyUriToFile = { uri: Uri, destFile: java.io.File ->
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                destFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedIconUri = uri
+            newProjIcon = "custom"
+        }
+    }
     
     // Load projects list
     fun refreshProjects() {
@@ -352,10 +383,13 @@ fun DashboardScreen() {
     if (showCreateDialog) {
         var newProjName by remember { mutableStateOf("") }
         var newProjDesc by remember { mutableStateOf("") }
-        var newProjIcon by remember { mutableStateOf("folder") }
 
         AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
+            onDismissRequest = { 
+                showCreateDialog = false 
+                selectedIconUri = null
+                newProjIcon = "folder"
+            },
             title = { Text("Buat Proyek Baru", fontWeight = FontWeight.Bold, color = Color.White) },
             text = {
                 Column(
@@ -392,9 +426,10 @@ fun DashboardScreen() {
                     )
 
                     // Pick Icon row
-                    Text("Pilih Ikon:", color = Color.White, fontSize = 14.sp)
+                    Text("Pilih Ikon / Unggah Gambar:", color = Color.White, fontSize = 14.sp)
                     Row(
                         horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         listOf(
@@ -405,7 +440,10 @@ fun DashboardScreen() {
                         ).forEach { (name, icon) ->
                             val isSelected = newProjIcon == name
                             IconButton(
-                                onClick = { newProjIcon = name },
+                                onClick = { 
+                                    newProjIcon = name 
+                                    selectedIconUri = null
+                                },
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .background(if (isSelected) Color(0xFF03DAC6) else Color.Transparent)
@@ -417,6 +455,31 @@ fun DashboardScreen() {
                                 )
                             }
                         }
+
+                        // Custom Image Upload icon selector
+                        val isCustomSelected = newProjIcon == "custom"
+                        IconButton(
+                            onClick = { galleryLauncher.launch("image/*") },
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(if (isCustomSelected) Color(0xFF03DAC6) else Color.Transparent)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddCircle,
+                                contentDescription = "custom",
+                                tint = if (isCustomSelected) Color.Black else Color.White
+                            )
+                        }
+                    }
+
+                    if (selectedIconUri != null) {
+                        Text(
+                            "Gambar kustom dipilih!",
+                            color = Color(0xFF03DAC6),
+                            fontSize = 11.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             },
@@ -448,6 +511,12 @@ fun DashboardScreen() {
                             }
                         """.trimIndent())
 
+                        // Copy selection if upload was chosen
+                        if (newProjIcon == "custom" && selectedIconUri != null) {
+                            val destFile = File(projectDir, "project_icon.png")
+                            copyUriToFile(selectedIconUri!!, destFile)
+                        }
+
                         // main.js
                         val main = File(projectDir, "main.js")
                         main.writeText("""
@@ -472,6 +541,8 @@ fun DashboardScreen() {
                         """.trimIndent())
 
                         showCreateDialog = false
+                        selectedIconUri = null
+                        newProjIcon = "folder"
                         refreshProjects()
                         Toast.makeText(context, "Proyek Berhasil Dibuat!", Toast.LENGTH_SHORT).show()
                     },
@@ -481,7 +552,14 @@ fun DashboardScreen() {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }, colors = ButtonDefaults.textButtonColors(contentColor = Color.White)) {
+                TextButton(
+                    onClick = { 
+                        showCreateDialog = false 
+                        selectedIconUri = null
+                        newProjIcon = "folder"
+                    }, 
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
+                ) {
                     Text("Batal")
                 }
             },
@@ -495,6 +573,17 @@ fun DashboardScreen() {
         val proj = showRenameDialog!!
         var renameName by remember { mutableStateOf(proj.name) }
         var renameDesc by remember { mutableStateOf(proj.description) }
+        var renameIcon by remember { mutableStateOf(proj.iconName) }
+        var renameIconUri by remember { mutableStateOf<Uri?>(null) }
+
+        val editGalleryLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                renameIconUri = uri
+                renameIcon = "custom"
+            }
+        }
 
         AlertDialog(
             onDismissRequest = { showRenameDialog = null },
@@ -528,17 +617,86 @@ fun DashboardScreen() {
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Pick Icon row
+                    Text("Ubah Ikon / Unggah Gambar:", color = Color.White, fontSize = 14.sp)
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf(
+                            "folder" to Icons.Default.Settings,
+                            "alarm" to Icons.Default.Notifications,
+                            "vibration" to Icons.Default.Star,
+                            "code" to Icons.Default.Build
+                        ).forEach { (name, icon) ->
+                            val isSelected = renameIcon == name
+                            IconButton(
+                                onClick = { 
+                                    renameIcon = name 
+                                    renameIconUri = null
+                                },
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) Color(0xFF03DAC6) else Color.Transparent)
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = name,
+                                    tint = if (isSelected) Color.Black else Color.White
+                                )
+                            }
+                        }
+
+                        // Custom Image Upload icon selector
+                        val isCustomSelected = renameIcon == "custom"
+                        IconButton(
+                            onClick = { editGalleryLauncher.launch("image/*") },
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(if (isCustomSelected) Color(0xFF03DAC6) else Color.Transparent)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddCircle,
+                                contentDescription = "custom",
+                                tint = if (isCustomSelected) Color.Black else Color.White
+                            )
+                        }
+                    }
+
+                    if (renameIconUri != null) {
+                        Text(
+                            "Gambar kustom baru dipilih!",
+                            color = Color(0xFF03DAC6),
+                            fontSize = 11.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         if (renameName.isBlank()) return@Button
+
+                        // Copy selection if custom icon is chosen
+                        if (renameIcon == "custom" && renameIconUri != null) {
+                            val destFile = File(proj.path, "project_icon.png")
+                            copyUriToFile(renameIconUri!!, destFile)
+                        } else if (renameIcon != "custom") {
+                            val destFile = File(proj.path, "project_icon.png")
+                            if (destFile.exists()) {
+                                destFile.delete()
+                            }
+                        }
+
                         val configFile = File(proj.path, "config.json")
                         configFile.writeText("""
                             {
                               "name": "${renameName.trim()}",
-                              "icon": "${proj.iconName}",
+                              "icon": "${renameIcon}",
                               "description": "${renameDesc.trim()}"
                             }
                         """.trimIndent())
@@ -568,6 +726,17 @@ fun ProjectItemCard(
     onClicked: () -> Unit,
     onLongClicked: () -> Unit
 ) {
+    val customIconFile = remember(project.path) { File(project.path, "project_icon.png") }
+    val bitmap = remember(project.iconName, customIconFile) {
+        if (project.iconName == "custom" && customIconFile.exists()) {
+            try {
+                BitmapFactory.decodeFile(customIconFile.absolutePath)
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+    }
+
     val iconVector = when (project.iconName) {
         "alarm" -> Icons.Default.Notifications
         "vibration" -> Icons.Default.Star
@@ -603,12 +772,21 @@ fun ProjectItemCard(
                     .clip(CircleShape)
                     .background(Color(0xFF6200EE).copy(alpha = 0.25f))
             ) {
-                Icon(
-                    imageVector = iconVector,
-                    contentDescription = project.name,
-                    tint = Color(0xFF03DAC6),
-                    modifier = Modifier.size(22.dp)
-                )
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = project.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = iconVector,
+                        contentDescription = project.name,
+                        tint = Color(0xFF03DAC6),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -639,16 +817,29 @@ private fun createHomeScreenShortcut(context: Context, project: Project) {
                 putExtra("PROJECT_PATH", project.path)
             }
 
-            val iconRes = when (project.iconName) {
-                "alarm" -> android.R.drawable.ic_lock_idle_alarm
-                "vibration" -> android.R.drawable.stat_sys_phone_call
-                else -> android.R.drawable.ic_menu_save
+            val customIconFile = File(project.path, "project_icon.png")
+            val shortcutIcon = if (project.iconName == "custom" && customIconFile.exists()) {
+                try {
+                    val bmp = BitmapFactory.decodeFile(customIconFile.absolutePath)
+                    if (bmp != null) Icon.createWithBitmap(bmp) else null
+                } catch (e: Exception) {
+                    null
+                }
+            } else null
+
+            val iconToUse = shortcutIcon ?: run {
+                val iconRes = when (project.iconName) {
+                    "alarm" -> android.R.drawable.ic_lock_idle_alarm
+                    "vibration" -> android.R.drawable.stat_sys_phone_call
+                    else -> android.R.drawable.ic_menu_save
+                }
+                Icon.createWithResource(context, iconRes)
             }
 
             val shortcutInfo = ShortcutInfo.Builder(context, "shortcut_${project.folderName}")
                 .setShortLabel(project.name)
                 .setLongLabel(project.name)
-                .setIcon(Icon.createWithResource(context, iconRes))
+                .setIcon(iconToUse)
                 .setIntent(shortcutIntent)
                 .build()
 

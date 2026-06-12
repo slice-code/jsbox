@@ -3,12 +3,41 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Stylized, bold glowing JS Code Bracket vector (< / >) -->
+
+    <!-- Subtle Drop Shadow under 3D Cube -->
     <path
-        android:pathData="M34,36 L18,54 L34,72 M74,36 L90,54 L74,72 M44,78 L64,30"
-        android:strokeWidth="7"
-        android:strokeColor="#03DAC6"
+        android:fillColor="#3D000000"
+        android:pathData="M 20,74 C 20,74 54,104 54,104 C 54,104 88,74 88,74 C 88,74 54,84 54,84 Z" />
+
+    <!-- 3D CUBE -->
+    <!-- Top Face (Highlighted light yellow/gold) -->
+    <path
+        android:fillColor="#FCD860"
+        android:pathData="M 54,24 L 88,44 L 54,64 L 20,44 Z" />
+
+    <!-- Left Face (Medium yellow/gold) -->
+    <path
+        android:fillColor="#E5AF25"
+        android:pathData="M 20,44 L 54,64 L 54,94 L 20,74 Z" />
+
+    <!-- Right Face (Dark shadowed gold/mustard) -->
+    <path
+        android:fillColor="#C19114"
+        android:pathData="M 54,64 L 88,44 L 88,74 L 54,94 Z" />
+
+    <!-- Curly Braces {} on the front-right side of the cube, styled dark and elegant -->
+    <!-- Sheared and aligned to the isometric right-face perspective -->
+    <path
+        android:pathData="M 62,60 C 60,61 60,63 60,65 L 60,69 C 60,70 59,71 58,72 C 59,73 60,74 60,75 L 60,79 C 60,81 60,83 62,84"
+        android:strokeWidth="2.5"
+        android:strokeColor="#1C180E"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M 80,50 C 82,51 82,53 82,55 L 82,59 C 82,60 83,61 84,62 C 83,63 82,64 82,65 L 82,69 C 82,71 82,73 80,74"
+        android:strokeWidth="2.5"
+        android:strokeColor="#1C180E"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
