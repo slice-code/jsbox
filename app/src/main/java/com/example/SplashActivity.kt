@@ -103,7 +103,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
         } else {
             Toast.makeText(
                 context,
-                "Akses Penyimpanan Ditolak. Aplikasi menggunakan folder lokal demi kestabilan.",
+                "Storage Access Denied. The app will use internal storage for stability.",
                 Toast.LENGTH_LONG
             ).show()
             // Continue using internal fallback storage
@@ -120,7 +120,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
         } else {
             Toast.makeText(
                 context,
-                "Akses Penyimpanan Ditolak. Aplikasi menggunakan folder lokal demi kestabilan.",
+                "Storage Access Denied. The app will use internal storage for stability.",
                 Toast.LENGTH_LONG
             ).show()
             // Continue using internal fallback storage
@@ -220,7 +220,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
                     ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = "Peringatan Izin",
+                            contentDescription = "Permission Warning",
                             tint = Color(0xFFFFB74D),
                             modifier = Modifier.size(36.dp)
                         )
@@ -228,7 +228,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "Izin Akses File Diperlukan",
+                            text = "Storage Permission Required",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -238,7 +238,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Aplikasi ini menyimpan file code (main.js, service.js) di folder Documents publik luar. Hal ini memudahkan Anda mengedit isi file dari editor teks PC atau File Manager eksternal pilihan Anda.",
+                            text = "This app saves code files (main.js, service.js) in the public Documents folder. This allows you to easily edit files using a PC text editor or any external File Manager of your choice.",
                             fontSize = 14.sp,
                             color = Color(0xFFBEBED0),
                             textAlign = TextAlign.Center,
@@ -259,7 +259,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                "Minta Izin Akses",
+                                "Grant Permission",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
                             )
@@ -277,7 +277,7 @@ fun SplashContent(onPermissionGranted: () -> Unit) {
                                 contentColor = Color(0xFF8888AA)
                             )
                         ) {
-                            Text("Gunakan Penyimpanan Internal Saja")
+                            Text("Use Internal Storage Only")
                         }
                     }
                 }

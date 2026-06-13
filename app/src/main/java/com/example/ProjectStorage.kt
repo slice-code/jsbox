@@ -40,9 +40,9 @@ object ProjectStorage {
         if (!configFile.exists()) {
             configFile.writeText("""
                 {
-                  "name": "Demo Getar & Alarm",
+                  "name": "Demo Vibrate & Alarm",
                   "icon": "vibration",
-                  "description": "Contoh aplikasi JS-Sandbox untuk menggetarkan perangkat, memasang alarm, dan menjalankan service latar belakang."
+                  "description": "Example JS-Sandbox application to vibrate device, schedule alarms, and run headless background services."
                 }
             """.trimIndent())
         }
@@ -74,7 +74,7 @@ object ProjectStorage {
                 headerCard.appendChild(title);
 
                 const subtitle = document.createElement('p');
-                subtitle.innerText = 'Platform JavaScript DOM native Android Bridge';
+                subtitle.innerText = 'JavaScript DOM native Android Bridge Platform';
                 subtitle.style.margin = '0';
                 subtitle.style.fontSize = '14px';
                 subtitle.style.opacity = '0.9';
@@ -92,7 +92,7 @@ object ProjectStorage {
 
                 // 1. Vibrate Button
                 const btnVibrate = document.createElement('button');
-                btnVibrate.innerText = '📳 Getarkan HP (500ms)';
+                btnVibrate.innerText = '📳 Vibrate Device (500ms)';
                 btnVibrate.style.padding = '14px';
                 btnVibrate.style.backgroundColor = '#1e1e2e';
                 btnVibrate.style.color = '#03dac6';
@@ -103,7 +103,7 @@ object ProjectStorage {
                 btnVibrate.style.cursor = 'pointer';
                 btnVibrate.onclick = () => {
                     vibrate(500);
-                    showToast('HP Menggetar 500 Milidetik!');
+                    showToast('Vibrating device for 500ms!');
                 };
                 actionGroup.appendChild(btnVibrate);
 
@@ -118,7 +118,7 @@ object ProjectStorage {
                 alarmCard.style.gap = '12px';
 
                 const sectionTitle = document.createElement('div');
-                sectionTitle.innerText = '⏰ Jadwalkan Alarm Baru';
+                sectionTitle.innerText = '⏰ Schedule New Alarm';
                 sectionTitle.style.color = '#bb86fc';
                 sectionTitle.style.fontWeight = 'bold';
                 sectionTitle.style.fontSize = '16px';
@@ -130,8 +130,8 @@ object ProjectStorage {
 
                 const inputLabel = document.createElement('input');
                 inputLabel.type = 'text';
-                inputLabel.value = 'Makan Siang';
-                inputLabel.placeholder = 'Label Alarm';
+                inputLabel.value = 'Lunch Time';
+                inputLabel.placeholder = 'Alarm Label';
                 inputLabel.style.flex = '1';
                 inputLabel.style.padding = '10px';
                 inputLabel.style.backgroundColor = '#121214';
@@ -153,7 +153,7 @@ object ProjectStorage {
                 alarmCard.appendChild(inputRow);
 
                 const btnAlarm = document.createElement('button');
-                btnAlarm.innerText = 'Pasang Sistem Alarm';
+                btnAlarm.innerText = 'Set System Alarm';
                 btnAlarm.style.padding = '12px';
                 btnAlarm.style.backgroundColor = '#bb86fc';
                 btnAlarm.style.color = '#121212';
@@ -168,7 +168,7 @@ object ProjectStorage {
                         const hour = parseInt(parts[0], 10);
                         const minute = parseInt(parts[1], 10);
                         createAlarm(inputLabel.value, hour, minute);
-                        showToast('Alarm ' + inputLabel.value + ' berhasil diset jam ' + timeValue);
+                        showToast('Alarm ' + inputLabel.value + ' successfully set at ' + timeValue);
                     }
                 };
                 alarmCard.appendChild(btnAlarm);
@@ -192,7 +192,7 @@ object ProjectStorage {
                 serviceCard.appendChild(servTitle);
 
                 const btnService = document.createElement('button');
-                btnService.innerText = '🚀 Jalankan Layanan Headless';
+                btnService.innerText = '🚀 Start Headless Service';
                 btnService.style.padding = '12px';
                 btnService.style.backgroundColor = '#cf6679';
                 btnService.style.color = 'white';
@@ -202,12 +202,12 @@ object ProjectStorage {
                 btnService.style.cursor = 'pointer';
                 btnService.onclick = () => {
                     startBackgroundService('service.js');
-                    showToast('Background Service Dijalankan!');
+                    showToast('Background Service Started!');
                 };
                 serviceCard.appendChild(btnService);
-
+ 
                 const msgArea = document.createElement('div');
-                msgArea.innerText = 'Menunggu pesan dari service.js...';
+                msgArea.innerText = 'Waiting for messages from service.js...';
                 msgArea.style.padding = '10px';
                 msgArea.style.backgroundColor = '#121214';
                 msgArea.style.border = '1px dashed #cf6679';
@@ -219,11 +219,11 @@ object ProjectStorage {
 
                 actionGroup.appendChild(serviceCard);
 
-                // Service Message Event Handler
+                // Service Message Handler
                 window.onServiceMessage = (data) => {
                     const el = document.getElementById('msg-log');
                     if (el) {
-                        el.innerText = '📬 Masuk service: ' + data;
+                        el.innerText = '📬 Received from service: ' + data;
                     }
                 };
             """.trimIndent())
@@ -283,7 +283,7 @@ object ProjectStorage {
                 let sec = 0;
                 setInterval(() => {
                     sec += 1;
-                    sendMessageToUI("Sudah " + sec + " detik di latar belakang!");
+                    sendMessageToUI("Elapsed: " + sec + " seconds in background!");
                 }, 1000);
             """.trimIndent())
         }

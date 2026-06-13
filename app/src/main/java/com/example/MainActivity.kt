@@ -124,7 +124,7 @@ fun DashboardScreen() {
                 if (file.isDirectory && !file.name.startsWith(".")) {
                     val configFile = File(file, "config.json")
                     var projName = file.name
-                    var projDesc = "Aplikasi kustom JavaScript"
+                    var projDesc = "Custom JavaScript application"
                     var projIcon = "folder"
                     
                     if (configFile.exists()) {
@@ -173,7 +173,7 @@ fun DashboardScreen() {
                             color = Color.White
                         )
                         Text(
-                            "Daftar Proyek Sandbox Anda",
+                            "Your Sandbox Project List",
                             fontSize = 12.sp,
                             color = Color(0xFF8888AA)
                         )
@@ -187,7 +187,7 @@ fun DashboardScreen() {
                         onClick = { refreshProjects() },
                         modifier = Modifier.testTag("refresh_dashboard")
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Segarkan", tint = Color.White)
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White)
                     }
                 }
             )
@@ -202,7 +202,7 @@ fun DashboardScreen() {
                     .padding(8.dp)
                     .testTag("add_project_fab")
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Tambah Proyek Baru", modifier = Modifier.size(28.dp))
+                Icon(Icons.Default.Add, contentDescription = "Add New Project", modifier = Modifier.size(28.dp))
             }
         },
         containerColor = Color(0xFF0D0B18)
@@ -216,7 +216,7 @@ fun DashboardScreen() {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Cari nama atau deskripsi proyek...", color = Color(0xFF7F7A9B)) },
+                placeholder = { Text("Search project name or description...", color = Color(0xFF7F7A9B)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -260,9 +260,9 @@ fun DashboardScreen() {
             ) {
                 Text(
                     text = if (searchQuery.isEmpty()) {
-                        "Total: ${projects.size} Proyek"
+                        "Total: ${projects.size} Projects"
                     } else {
-                        "Hasil pencarian: ${filteredProjects.size} dari ${projects.size}"
+                        "Search results: ${filteredProjects.size} of ${projects.size}"
                     },
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -270,7 +270,7 @@ fun DashboardScreen() {
                 )
 
                 Text(
-                    text = "Tekan Ikon (⋮) untuk Menu Pilihan",
+                    text = "Tap Icon (⋮) for options",
                     fontSize = 11.sp,
                     color = Color(0xFF64748B)
                 )
@@ -294,13 +294,13 @@ fun DashboardScreen() {
                     ) {
                         Icon(
                             imageVector = if (searchQuery.isEmpty()) Icons.Default.Info else Icons.Default.Search,
-                            contentDescription = "Kosong",
+                            contentDescription = "Empty",
                             tint = Color(0xFF444466),
                             modifier = Modifier.size(64.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (searchQuery.isEmpty()) "Belum Ada Proyek" else "Proyek Tidak Ditemukan",
+                            text = if (searchQuery.isEmpty()) "No Projects Yet" else "Project Not Found",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -308,9 +308,9 @@ fun DashboardScreen() {
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = if (searchQuery.isEmpty()) {
-                                "Klik tombol (+) di bawah untuk membuat proyek web sandbox JavaScript pertama Anda."
+                                "Tap the (+) button below to create your first JavaScript sandbox project."
                             } else {
-                                "Tidak ada proyek yang cocok dengan kata kunci '$searchQuery'."
+                                "No projects matched the keyword '$searchQuery'."
                             },
                             fontSize = 14.sp,
                             color = Color(0xFFBEBED0),
@@ -389,9 +389,9 @@ fun DashboardScreen() {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Mainkan", tint = Color.Black)
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Run", tint = Color.Black)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Jalankan Sandbox", color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text("Run Sandbox", color = Color.Black, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -427,7 +427,7 @@ fun DashboardScreen() {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Share, contentDescription = "Shortcut", tint = Color.White)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Tambahkan Shortcut Beranda", color = Color.White)
+                            Text("Add Home Screen Shortcut", color = Color.White)
                         }
                     }
 
@@ -443,7 +443,7 @@ fun DashboardScreen() {
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Ubah Nama", color = Color.White)
+                            Text("Rename", color = Color.White)
                         }
 
                         // Option 5: Delete
@@ -454,13 +454,13 @@ fun DashboardScreen() {
                                 if (dir.exists()) {
                                     dir.deleteRecursively()
                                 }
-                                Toast.makeText(context, "Proyek dihapus.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Project deleted.", Toast.LENGTH_SHORT).show()
                                 refreshProjects()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCF6679)),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Hapus", color = Color.White)
+                            Text("Delete", color = Color.White)
                         }
                     }
                 }
@@ -482,7 +482,7 @@ fun DashboardScreen() {
                 selectedIconUri = null
                 newProjIcon = "folder"
             },
-            title = { Text("Buat Proyek Baru", fontWeight = FontWeight.Bold, color = Color.White) },
+            title = { Text("Create New Project", fontWeight = FontWeight.Bold, color = Color.White) },
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -491,7 +491,7 @@ fun DashboardScreen() {
                     OutlinedTextField(
                         value = newProjName,
                         onValueChange = { newProjName = it },
-                        label = { Text("Nama Proyek") },
+                        label = { Text("Project Name") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF03DAC6),
                             unfocusedLabelColor = Color(0xFF8888AA),
@@ -502,11 +502,11 @@ fun DashboardScreen() {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-
+ 
                     OutlinedTextField(
                         value = newProjDesc,
                         onValueChange = { newProjDesc = it },
-                        label = { Text("Deskripsi Singkat") },
+                        label = { Text("Short Description") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF03DAC6),
                             unfocusedLabelColor = Color(0xFF8888AA),
@@ -518,7 +518,7 @@ fun DashboardScreen() {
                     )
 
                     // Pick Icon row
-                    Text("Pilih Ikon / Unggah Gambar:", color = Color.White, fontSize = 14.sp)
+                    Text("Choose Icon / Upload Image:", color = Color.White, fontSize = 14.sp)
                     Row(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically,
@@ -566,7 +566,7 @@ fun DashboardScreen() {
 
                     if (selectedIconUri != null) {
                         Text(
-                            "Gambar kustom dipilih!",
+                            "Custom image selected!",
                             color = Color(0xFF03DAC6),
                             fontSize = 11.sp,
                             textAlign = TextAlign.Center,
@@ -579,7 +579,7 @@ fun DashboardScreen() {
                 Button(
                     onClick = {
                         if (newProjName.isBlank()) {
-                            Toast.makeText(context, "Nama proyek wajib diisi!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Project name is required!", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         // Create folder and files
@@ -587,7 +587,7 @@ fun DashboardScreen() {
                         val baseDir = ProjectStorage.getBaseDir(context)
                         val projectDir = File(baseDir, formattedFolder)
                         if (projectDir.exists()) {
-                            Toast.makeText(context, "Proyek dengan folder tersebut sudah ada!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "A project with that folder already exists!", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         
@@ -599,7 +599,7 @@ fun DashboardScreen() {
                             {
                               "name": "${newProjName.trim()}",
                               "icon": "$newProjIcon",
-                              "description": "${newProjDesc.trim().ifEmpty { "Aplikasi sandbox JS kustom" }}"
+                              "description": "${newProjDesc.trim().ifEmpty { "Custom JS sandbox app" }}"
                             }
                         """.trimIndent())
 
@@ -634,7 +634,7 @@ fun DashboardScreen() {
                                 });
 
                             const title = el('h2')
-                                .text('Halo, Selamat Datang!')
+                                .text('Hello, Welcome!')
                                 .css({
                                     color: '#03dac6',
                                     margin: '0 0 12px 0',
@@ -642,7 +642,7 @@ fun DashboardScreen() {
                                 });
 
                             const description = el('p')
-                                .text('Workspace custom baru Anda dengan library DOM el.js bawaan secara global.')
+                                .text('Your new custom workspace with globally built-in el.js DOM library.')
                                 .css({
                                     color: '#cccccc',
                                     margin: '0 0 20px 0',
@@ -651,7 +651,7 @@ fun DashboardScreen() {
                                 });
 
                             const testBtn = el('button')
-                                .text('Getarkan Perangkat 📳')
+                                .text('Vibrate Device 📳')
                                 .css({
                                     padding: '12px 24px',
                                     backgroundColor: '#03dac6',
@@ -665,7 +665,7 @@ fun DashboardScreen() {
                                 .click(() => {
                                     if (window.android && window.android.vibrate) {
                                         window.android.vibrate(200);
-                                        window.android.showToast('Perangkat bergetar!');
+                                        window.android.showToast('Device vibrated!');
                                     } else {
                                         console.log('Vibrate triggered');
                                     }
@@ -679,11 +679,11 @@ fun DashboardScreen() {
                         selectedIconUri = null
                         newProjIcon = "folder"
                         refreshProjects()
-                        Toast.makeText(context, "Proyek Berhasil Dibuat!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Project Created Successfully!", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC6))
                 ) {
-                    Text("Buat", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Create", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -695,7 +695,7 @@ fun DashboardScreen() {
                     }, 
                     colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
                 ) {
-                    Text("Batal")
+                    Text("Cancel")
                 }
             },
             containerColor = Color(0xFF1B182E),
@@ -722,7 +722,7 @@ fun DashboardScreen() {
 
         AlertDialog(
             onDismissRequest = { showRenameDialog = null },
-            title = { Text("Ubah Detail Proyek", fontWeight = FontWeight.Bold, color = Color.White) },
+            title = { Text("Edit Project Details", fontWeight = FontWeight.Bold, color = Color.White) },
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -731,7 +731,7 @@ fun DashboardScreen() {
                     OutlinedTextField(
                         value = renameName,
                         onValueChange = { renameName = it },
-                        label = { Text("Nama Baru") },
+                        label = { Text("New Name") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF03DAC6),
                             focusedTextColor = Color.White,
@@ -744,7 +744,7 @@ fun DashboardScreen() {
                     OutlinedTextField(
                         value = renameDesc,
                         onValueChange = { renameDesc = it },
-                        label = { Text("Deskripsi Baru") },
+                        label = { Text("New Description") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF03DAC6),
                             focusedTextColor = Color.White,
@@ -754,7 +754,7 @@ fun DashboardScreen() {
                     )
 
                     // Pick Icon row
-                    Text("Ubah Ikon / Unggah Gambar:", color = Color.White, fontSize = 14.sp)
+                    Text("Change Icon / Upload Image:", color = Color.White, fontSize = 14.sp)
                     Row(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically,
@@ -802,7 +802,7 @@ fun DashboardScreen() {
 
                     if (renameIconUri != null) {
                         Text(
-                            "Gambar kustom baru dipilih!",
+                            "New custom image selected!",
                             color = Color(0xFF03DAC6),
                             fontSize = 11.sp,
                             textAlign = TextAlign.Center,
@@ -840,12 +840,12 @@ fun DashboardScreen() {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC6))
                 ) {
-                    Text("Simpan", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Save", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRenameDialog = null }, colors = ButtonDefaults.textButtonColors(contentColor = Color.White)) {
-                    Text("Batal")
+                    Text("Cancel")
                 }
             },
             containerColor = Color(0xFF1B182E),
@@ -948,7 +948,7 @@ fun ProjectItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Pilihan",
+                            contentDescription = "Options",
                             tint = Color(0xFFBEBED0),
                             modifier = Modifier.size(16.dp)
                         )
@@ -969,7 +969,7 @@ fun ProjectItemCard(
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = project.description.ifEmpty { "Aplikasi sandbox JS kustom" },
+                        text = project.description.ifEmpty { "Custom JS sandbox app" },
                         fontSize = 11.sp,
                         color = Color(0xFF9E9EB2),
                         maxLines = 2,
@@ -991,7 +991,7 @@ fun ProjectItemCard(
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
-                        text = "JALANKAN SANDBOX",
+                        text = "RUN SANDBOX",
                         color = Color(0xFF03DAC6),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -1048,11 +1048,11 @@ private fun createHomeScreenShortcut(context: Context, project: Project) {
             )
 
             shortcutManager.requestPinShortcut(shortcutInfo, successPendingIntent.intentSender)
-            Toast.makeText(context, "Shortcut '${project.name}' disematkan di Beranda!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Shortcut '${project.name}' pinned to Home Screen!", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Penyematan shortcut tidak didukung di perangkat ini.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Pinning shortcuts is not supported on this device.", Toast.LENGTH_SHORT).show()
         }
     } else {
-        Toast.makeText(context, "Versi OS membutuhkan Android 8.0 Oreo ke atas.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "OS version requires Android 8.0 Oreo or above.", Toast.LENGTH_SHORT).show()
     }
 }

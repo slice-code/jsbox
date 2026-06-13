@@ -483,7 +483,7 @@
             </div>
             <div class="status-badge" id="hud-badge">
                 <div class="status-dot" id="ws-dot"></div>
-                <span id="ws-text">Menghubungkan...</span>
+                <span id="ws-text">Connecting...</span>
             </div>
         </div>
         <div class="action-bar">
@@ -493,7 +493,7 @@
                     <polyline points="17 21 17 13 7 13 7 21"></polyline>
                     <polyline points="7 3 7 8 15 8"></polyline>
                 </svg>
-                Simpan
+                Save
             </button>
             <button class="btn btn-play" onclick="triggerPlay()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -508,13 +508,13 @@
     <main>
         <aside>
             <div class="sidebar-header-area">
-                <div class="sidebar-title">Berkas Proyek</div>
+                <div class="sidebar-title">Project Files</div>
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" class="search-input" id="search-filter" placeholder="Cari berkas..." oninput="filterFiles()">
+                    <input type="text" class="search-input" id="search-filter" placeholder="Search files..." oninput="filterFiles()">
                 </div>
             </div>
             
@@ -530,16 +530,16 @@
             <div class="editor-header">
                 <div class="active-tab-title">
                     <div class="active-tab-indicator"></div>
-                    <span id="tab-title">Tidak ada berkas terpilih</span>
+                    <span id="tab-title">No file selected</span>
                 </div>
-                <div class="shortcuts-indicator">Ctrl+S untuk Simpan</div>
+                <div class="shortcuts-indicator">Ctrl+S to Save</div>
             </div>
             
             <div id="editor-host"></div>
 
             <div class="editor-overlay-message" id="editor-overlay">
                 <div class="spinner"></div>
-                <p style="font-weight:500; font-size:0.9rem;">Membuat Workspace Environment...</p>
+                <p style="font-weight:500; font-size:0.9rem;">Building Workspace Environment...</p>
             </div>
         </section>
     </main>
@@ -577,7 +577,7 @@
 
         // Initialize CodeMirror Editor Instance
         editorInstance = CodeMirror(document.getElementById('editor-host'), {
-            value: '// Silakan pilih berkas di sidebar...',
+            value: '// Please select a file from the sidebar...',
             mode: 'javascript',
             theme: 'dracula',
             lineNumbers: true,
@@ -632,15 +632,15 @@
             
             wsConnection.onopen = function () {
                 document.getElementById('ws-dot').className = 'status-dot connected';
-                document.getElementById('ws-text').innerText = 'Terhubung';
+                document.getElementById('ws-text').innerText = 'Connected';
                 document.getElementById('hud-badge').style.borderColor = 'rgba(3, 218, 198, 0.2)';
                 document.getElementById('hud-badge').style.background = 'rgba(3, 218, 198, 0.03)';
-                showToast("Terhubung ke JSBox Server!", "success");
+                showToast("Connected to JSBox Server!", "success");
             };
             
             wsConnection.onclose = function () {
                 document.getElementById('ws-dot').className = 'status-dot';
-                document.getElementById('ws-text').innerText = 'Mencoba Menyambung...';
+                document.getElementById('ws-text').innerText = 'Reconnecting...';
                 document.getElementById('hud-badge').style.borderColor = 'var(--accent-error)';
                 document.getElementById('hud-badge').style.background = 'rgba(239, 68, 68, 0.05)';
                 setTimeout(connectWebSocket, 3000);
@@ -654,7 +654,7 @@
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === "play_status") {
-                        showToast(data.message || "Aplikasi dijalankan ulang!", "info");
+                        showToast(data.message || "App restarted!", "info");
                     }
                 } catch(e) {
                     console.log("WS raw telemetry:", event.data);
@@ -665,13 +665,13 @@
         // Action: Execute instant play
         function triggerPlay() {
             saveCurrentFile().then(() => {
-                showToast("Mengirim skrip jalankan ulang...", "info");
+                showToast("Triggering run...", "info");
                 if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
                     wsConnection.send(JSON.stringify({ event: "trigger_play" }));
                 } else {
                     fetch('/api/play', { method: 'POST' })
-                        .then(() => showToast("Aplikasi dijalankan!", "success"))
-                        .catch(e => showToast("Gagal melakukan instant run di browser", "error"));
+                        .then(() => showToast("App started!", "success"))
+                        .catch(e => showToast("Failed to trigger run", "error"));
                 }
             });
         }
@@ -682,7 +682,7 @@
             ul.innerHTML = '';
             
             if (files.length === 0) {
-                ul.innerHTML = `<li class="file-item" style="color:var(--color-muted); pointer-events: none; justify-content: center;">Tidak ada berkas cocok</li>`;
+                ul.innerHTML = `<li class="file-item" style="color:var(--color-muted); pointer-events: none; justify-content: center;">No matching files</li>`;
                 return;
             }
             
@@ -725,8 +725,8 @@
                     }
                 })
                 .catch(err => {
-                    console.error("Gagal refresh folder proyek:", err);
-                    showToast("Gagal menyinkronkan file sidebar", "error");
+                    console.error("Failed to refresh project directory:", err);
+                    showToast("Failed to sync sidebar files", "error");
                 });
         }
 
@@ -766,7 +766,7 @@
                         }
                     })
                     .catch(err => {
-                        showToast("Gagal memuat konten file", "error");
+                        showToast("Failed to load file content", "error");
                     });
             };
 
@@ -798,15 +798,15 @@
             })
             .then(res => {
                 if (res.ok) {
-                    console.log('Berkas ' + activeFilePath + ' tersimpan!');
-                    showToast(`Tersimpan: ${activeFilePath}`, "success");
+                    console.log('File ' + activeFilePath + ' saved!');
+                    showToast(`Saved: ${activeFilePath}`, "success");
                 } else {
-                    showToast("Kesalahan eksternal saat menyimpan berkas", "error");
+                    showToast("Error saving file", "error");
                 }
             })
             .catch(err => {
                 console.error(err);
-                showToast("Gagal menyambung untuk menyimpan berkas", "error");
+                showToast("Connection failed, cannot save", "error");
             });
         }
     </script>

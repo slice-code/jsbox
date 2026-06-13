@@ -48,11 +48,11 @@ class PreviewActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         // Read intent data
-        projectName = intent.getStringExtra("PROJECT_NAME") ?: "Aplikasi Pengguna"
+        projectName = intent.getStringExtra("PROJECT_NAME") ?: "User Application"
         projectPath = intent.getStringExtra("PROJECT_PATH") ?: ""
 
         if (projectPath.isEmpty()) {
-            Toast.makeText(this, "Error: Jalur proyek kosong.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Error: Empty project path.", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -122,7 +122,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
             JsBackgroundService.serviceMessageFlow.collectLatest { message ->
                 coroutineScope.launch {
                     val formattedMsg = message.replace("'", "\\'")
-                    addLog("📬 Pesan Latar Belakang: $message")
+                    addLog("📬 Background Message: $message")
                     webViewInstance?.evaluateJavascript(
                         "if (window.onServiceMessage) { window.onServiceMessage('$formattedMsg'); }", 
                         null
@@ -169,7 +169,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                 
                 webViewInstance?.post {
                     webViewInstance?.evaluateJavascript(hotsyncScript, null)
-                    addLog("⚡ Instant Run dipicu: Menyinkronkan dan menjalankan ulang skrip terbaru.")
+                    addLog("⚡ Instant Run triggered: Syncing and restarting latest script.")
                 }
             }
         }
@@ -206,7 +206,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                             color = Color.White
                         )
                         Text(
-                            "Menjalankan di Runtime Sandbox",
+                            "Running in Sandbox Runtime",
                             fontSize = 11.sp,
                             color = Color(0xFF03DAC6)
                         )
@@ -222,7 +222,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                         }
                         onBack()
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -278,7 +278,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                             webViewClient = object : WebViewClient() {
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     super.onPageFinished(view, url)
-                                    addLog("✅ Sandbox DOM dimuat sempurna.")
+                                    addLog("✅ Sandbox DOM loaded successfully.")
                                 }
                                 
                                 override fun onReceivedError(
@@ -354,9 +354,9 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                                                     pendingIntent
                                                 )
                                             }
-                                            addLog("⏰ Alarm diset: $label pada ${String.format("%02d:%02d", hour, minute)}")
+                                            addLog("⏰ Alarm set: $label at ${String.format("%02d:%02d", hour, minute)}")
                                         } catch (e: Exception) {
-                                            addLog("❌ Gagal menyetel Alarm: ${e.message}")
+                                            addLog("❌ Failed to set Alarm: ${e.message}")
                                         }
                                     }
                                 }
@@ -377,7 +377,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                                             }
                                             addLog("⚙️ Background Service running: $filename")
                                         } catch (e: Exception) {
-                                            addLog("❌ Gagal memulai Service Latar Belakang: ${e.message}")
+                                            addLog("❌ Failed to start Background Service: ${e.message}")
                                         }
                                     }
                                 }
@@ -413,7 +413,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                                     <script>
                                         // Setup standard error telemetry
                                         window.addEventListener('error', function(e) {
-                                            console.error("Kesalahan: " + e.message + " pada " + e.filename + ":" + e.lineno);
+                                            console.error("Error: " + e.message + " pada " + e.filename + ":" + e.lineno);
                                             if (window.android && window.android.logError) {
                                                 var stack = (e.error && e.error.stack) ? e.error.stack : "";
                                                 window.android.logError(e.message + " (" + e.filename.split('/').pop() + ":" + e.lineno + ")\n" + stack);
@@ -482,7 +482,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Konsol Log & Debugger", 
+                            "Console Log & Debugger", 
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = Color.White
@@ -510,12 +510,12 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                                 onClick = { consoleLogs.clear() },
                                 modifier = Modifier.size(36.dp)
                             ) {
-                                Icon(Icons.Default.Delete, contentDescription = "Bersihkan", tint = Color(0xFFCF6679), modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Delete, contentDescription = "Clear", tint = Color(0xFFCF6679), modifier = Modifier.size(18.dp))
                             }
                         }
                         Icon(
                             imageVector = if (isConsoleExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                            contentDescription = if (isConsoleExpanded) "Minimalkan" else "Perbesar",
+                            contentDescription = if (isConsoleExpanded) "Minimize" else "Expand",
                             tint = Color(0xFFBEBED0),
                             modifier = Modifier.size(24.dp)
                         )
@@ -531,7 +531,7 @@ fun PreviewRunnerScreen(projectName: String, projectPath: String, onBack: () -> 
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                "Belum ada log aktivitas console.log()",
+                                "No console.log() activity logged yet",
                                 fontSize = 12.sp,
                                 color = Color(0xFF8888AA)
                             )

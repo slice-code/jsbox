@@ -61,7 +61,7 @@ class RemoteEditorService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val path = intent?.getStringExtra("PROJECT_PATH") ?: ""
-        val name = intent?.getStringExtra("PROJECT_NAME") ?: "Proyek JSBox"
+        val name = intent?.getStringExtra("PROJECT_NAME") ?: "JSBox Project"
         val action = intent?.action
 
         if (action == "STOP_SERVER" || path.isEmpty()) {
@@ -81,15 +81,15 @@ class RemoteEditorService : Service() {
                 acquire(10 * 60 * 1000L /*10 minutes*/)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Gagal meluncurkan WakeLock: ${e.message}")
+            Log.e(TAG, "Failed to acquire WakeLock: ${e.message}")
         }
 
         // Start Foreground Notification
         val notificationUrl = "http://$hostIpAddress:$hostPort"
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle("Remote Editor Aktif: $name")
-            .setContentText("Akses editor melalui browser PC: $notificationUrl")
+            .setContentTitle("Remote Editor Active: $name")
+            .setContentText("Access editor via PC browser: $notificationUrl")
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
@@ -104,13 +104,13 @@ class RemoteEditorService : Service() {
                 override fun onClientConnected() {
                     activeConnections++
                     serviceUIFlow.tryEmit(Unit)
-                    Log.d(TAG, "Koneksi client baru masuk. Total: $activeConnections")
+                    Log.d(TAG, "New client connected. Total: $activeConnections")
                 }
 
                 override fun onClientDisconnected() {
                     activeConnections = maxOf(0, activeConnections - 1)
                     serviceUIFlow.tryEmit(Unit)
-                    Log.d(TAG, "Koneksi client terputus. Total: $activeConnections")
+                    Log.d(TAG, "Client disconnected. Total: $activeConnections")
                 }
             }
             start()
@@ -156,7 +156,7 @@ class RemoteEditorService : Service() {
                 "Remote Editor Server Channel",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Channel untuk notifikasi server pengembang remote JSBox"
+                description = "Channel for JSBox remote developer server notifications"
             }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)

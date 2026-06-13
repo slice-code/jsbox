@@ -46,11 +46,11 @@ class EditorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        projectName = intent.getStringExtra("PROJECT_NAME") ?: "Editor Proyek"
+        projectName = intent.getStringExtra("PROJECT_NAME") ?: "Project Editor"
         projectPath = intent.getStringExtra("PROJECT_PATH") ?: ""
 
         if (projectPath.isEmpty()) {
-            Toast.makeText(this, "Error: Jalur proyek tidak valid.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Error: Invalid project path.", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -122,7 +122,7 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
             val code = currentEditor.text.toString()
             currentFile.writeText(code)
         } catch (e: Exception) {
-            Toast.makeText(context, "Gagal menyimpan berkas: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Failed to save file: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -136,7 +136,7 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
         // Transition to new file
         activeFile = newFile
         codeEditorRef?.setText(newFile.readText())
-        Toast.makeText(context, "Berkas dimuat: sisa autosave aman", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "File loaded: autosave complete", Toast.LENGTH_SHORT).show()
     }
 
     LaunchedEffect(projectPath) {
@@ -169,7 +169,7 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
                             color = Color.White
                         )
                         Text(
-                            text = "Berkas Aktif: ${activeFile?.name ?: "Tidak ada"}",
+                            text = "Active File: ${activeFile?.name ?: "None"}",
                             fontSize = 11.sp,
                             color = Color(0xFF03DAC6),
                             maxLines = 1,
@@ -183,23 +183,23 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
                         saveActiveFileContent()
                         onBack()
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 actions = {
                     // Mobile sidebar toggle button
                     if (!isLandscapeTablet) {
                         IconButton(onClick = { isMobileSidebarOpen = !isMobileSidebarOpen }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Daftar Berkas", tint = Color.White)
+                            Icon(Icons.Default.Menu, contentDescription = "File List", tint = Color.White)
                         }
                     }
 
                     // Explicit Save Button
                     IconButton(onClick = {
                         saveActiveFileContent()
-                        Toast.makeText(context, "Berkas disimpan!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "File saved!", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.Check, contentDescription = "Simpan", tint = Color(0xFF03DAC6))
+                        Icon(Icons.Default.Check, contentDescription = "Save", tint = Color(0xFF03DAC6))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -303,15 +303,15 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
         var newFileName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreateFileDialog = false },
-            title = { Text("Buat Berkas Baru", fontWeight = FontWeight.Bold, color = Color.White) },
+            title = { Text("Create New File", fontWeight = FontWeight.Bold, color = Color.White) },
             text = {
                 Column {
-                    Text("Buat berkas skrip JavaScript (.js) atau data JSON dalam proyek ini.", fontSize = 12.sp, color = Color(0xFFBEBED0))
+                    Text("Create a JavaScript script (.js) or JSON data file in this project.", fontSize = 12.sp, color = Color(0xFFBEBED0))
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = newFileName,
                         onValueChange = { newFileName = it },
-                        placeholder = { Text("utils.js, dll.") },
+                        placeholder = { Text("utils.js, etc.") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF03DAC6),
                             focusedTextColor = Color.White,
@@ -330,7 +330,7 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
                         
                         val newFile = File(projectPath, name)
                         if (newFile.exists()) {
-                            Toast.makeText(context, "Berkas sudah ada!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "File already exists!", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         
@@ -339,23 +339,23 @@ fun WorkspaceEditorScreen(projectName: String, projectPath: String, onBack: () -
                             if (name.endsWith(".json")) {
                                 newFile.writeText("{\n  \n}")
                             } else {
-                                newFile.writeText("// Berkas baru: $name\n")
+                                newFile.writeText("// New file: $name\n")
                             }
                             showCreateFileDialog = false
                             refreshFileList()
                             switchActiveFile(newFile)
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Gagal membuat berkas: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Failed to create file: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC6))
                 ) {
-                    Text("Buat", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Create", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateFileDialog = false }, colors = ButtonDefaults.textButtonColors(contentColor = Color.White)) {
-                    Text("Batal")
+                    Text("Cancel")
                 }
             },
             containerColor = Color(0xFF1B182E),
@@ -447,7 +447,7 @@ fun RemoteControlPanel(projectPath: String, projectName: String) {
                 val serverUrl = "http://$ipAddress:5009"
                 Column {
                     Text(
-                        text = "Akses browser Wi-Fi Anda ke:",
+                        text = "Access your Wi-Fi browser at:",
                         fontSize = 10.sp,
                         color = Color(0xFFBEBED0)
                     )
@@ -463,13 +463,13 @@ fun RemoteControlPanel(projectPath: String, projectName: String) {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                 val clip = android.content.ClipData.newPlainText("URL Remote Editor", serverUrl)
                                 clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "URL Remote disalin!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Remote URL copied!", Toast.LENGTH_SHORT).show()
                             }
                     )
                     if (activeConnections > 0) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "⚡ Terhubung: $activeConnections PC",
+                            text = "⚡ Connected: $activeConnections PC",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF03DAC6)
@@ -477,7 +477,7 @@ fun RemoteControlPanel(projectPath: String, projectName: String) {
                     } else {
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "💤 Menunggu koneksi PC...",
+                            text = "💤 Waiting for PC connection...",
                             fontSize = 11.sp,
                             color = Color(0xFFBEBED0)
                         )
@@ -485,7 +485,7 @@ fun RemoteControlPanel(projectPath: String, projectName: String) {
                 }
             } else {
                 Text(
-                    text = "Server tidak aktif. Hidupkan tombol untuk mengedit proyek ini via browser laptop/PC.",
+                    text = "Server inactive. Turn on the switch to edit this project via your laptop/PC browser.",
                     fontSize = 10.sp,
                     color = Color(0xFF8888AA),
                     lineHeight = 1.4.sp
@@ -520,14 +520,14 @@ fun FileManagerPane(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "BERKAS",
+                "FILES",
                 fontSize = 12.sp,
                 color = Color(0xFF8888AA),
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.5.sp
             )
             IconButton(onClick = onCreateFileRequest, modifier = Modifier.size(28.dp)) {
-                Icon(Icons.Default.AddCircle, contentDescription = "Tambah Berkas", tint = Color(0xFF03DAC6))
+                Icon(Icons.Default.AddCircle, contentDescription = "Add File", tint = Color(0xFF03DAC6))
             }
         }
 
@@ -581,7 +581,7 @@ fun FileManagerPane(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Hapus Berkas",
+                                contentDescription = "Delete File",
                                 tint = Color(0xFFCF6679).copy(alpha = 0.8f),
                                 modifier = Modifier.size(14.dp)
                             )
