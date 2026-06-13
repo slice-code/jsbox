@@ -196,25 +196,9 @@ class RemoteEditorServer(
                 }
                 url == "/api/save" && method.equals("POST", ignoreCase = true) -> {
                     try {
-                        val pathToken = "\"path\":\""
-                        val contentToken = "\"content\":\""
-                        val pathStart = body.indexOf(pathToken)
-                        var pathVal = ""
-                        if (pathStart != -1) {
-                            pathVal = body.substring(pathStart + pathToken.length).substringBefore("\"")
-                        }
-                        val contentStart = body.indexOf(contentToken)
-                        var contentVal = ""
-                        if (contentStart != -1) {
-                            contentVal = body.substring(contentStart + contentToken.length)
-                            if (contentVal.endsWith("}")) {
-                                contentVal = contentVal.substring(0, contentVal.length - 1)
-                            }
-                            if (contentVal.endsWith("\"")) {
-                                contentVal = contentVal.substring(0, contentVal.length - 1)
-                            }
-                            contentVal = unescapeJsonString(contentVal)
-                        }
+                        val json = org.json.JSONObject(body)
+                        val pathVal = json.optString("path", "")
+                        val contentVal = json.optString("content", "")
 
                         if (pathVal.isNotEmpty()) {
                             val destFile = File(projectPath, pathVal)
